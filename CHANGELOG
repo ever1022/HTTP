@@ -1,3 +1,8 @@
 2014.03.07
+Support reveal.js + Markdown
+1. write a html to embed the markdown file.
+2. Open .md file with url?reveal.js
+
+2014.03.07
 Use winston logging library for logger.
 install winston: npm install winston.

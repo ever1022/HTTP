@@ -1,12 +1,17 @@
 var fs = require("fs");
+var url = require("url");
 var requestHandlers = require("./requestHandlers");
 var logger = require("./logger");
 
-function route(pathName, response) {
+function route(requestUrl, response) {
     logger.v("About to route a request for " + pathName);
+    var pathName = url.parse(requestUrl).pathname;
     
     try {
-        if(pathName !== "/" && pathName.length !== 0) {
+        if(pathName === "/") {
+            requestHandlers.files("", response);
+            return;
+        } else if(pathName.length !== 0) {
             if(pathName.substring(0,1) === "/") {
                 pathName = pathName.substring(1, pathName.length + 1);
             }
@@ -15,6 +20,11 @@ function route(pathName, response) {
                 logger.v("A directory is requested...");
                 requestHandlers.files(pathName, response);
             } else if (fileStats.isFile()) {
+                if(pathName.endsWith(".md") && url.parse(requestUrl).query === "reveal.js") {
+                    logger.v("Open markdwon with reveal.js...");
+                    requestHandlers.openMarkdownInRevealjs(pathName, response);
+                    return;
+                }
                 logger.v("A file is requested...");
                 requestHandlers.openFile(pathName, response);
             }

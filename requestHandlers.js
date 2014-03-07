@@ -1,6 +1,7 @@
 var exec = require("child_process").exec;
 var fs = require("fs");
 var logger = require("./logger");
+var path = require("path");
 
 function textArea(response) {
     logger.i("Request handler for 'TextArea' was called.");
@@ -32,9 +33,9 @@ function slides(response) {
     logger.i("Request handler for 'slides' was called");
 }
 
-function files(path, response) {
-    logger.i("Show " + path + " files... ");
-    var cmd = "ls -lh " + path;
+function files(pathName, response) {
+    logger.i("Show " + pathName + " files... ");
+    var cmd = "ls -lh " + pathName;
     exec(
         cmd,
         function(error, stdout, stderr) {
@@ -46,18 +47,39 @@ function files(path, response) {
 }
 
 
-function openFile(path, response) {
-    logger.i("Open file " + path + " ...");
-    if(! fs.existsSync(path)) {
-        logger.w("File " + path + " doesn't exist");
+function openFile(pathName, response) {
+    logger.i("Open file " + pathName + " ...");
+    if(! fs.existsSync(pathName)) {
+        logger.w("File " + pathName + " doesn't exist!");
         return false;
     } else {
         fs.readFile(
-            path,
+            pathName,
             "utf8",
-            function(err, file) {
+            function(err, data) {
                 response.writeHead(200, {"ContentType": "text/html"});
-                response.write(file);
+                response.write(data);
+                response.end();
+            }
+        );
+        return true;
+    }
+}
+
+function openMarkdownInRevealjs(pathName, response) {
+    logger.i("Open markdown file " + pathName + " with reveal.js...");
+    if(! fs.existsSync(pathName)) {
+        logger.w("File " + pathName + " doesn't exist!");
+        return false;
+    } else {
+        var fileName = path.basename(pathName);
+        fs.readFile(
+            "slides/sample.html",
+            "utf8",
+            function(err, data) {
+                var result = data.replace(/sample.md/g, fileName);
+                response.writeHead(200, {"ContentType": "text/html"});
+                response.write(result);
                 response.end();
             }
         );
@@ -67,3 +89,4 @@ function openFile(path, response) {
 
 exports.files = files;
 exports.openFile = openFile;
+exports.openMarkdownInRevealjs = openMarkdownInRevealjs;
