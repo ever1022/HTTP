@@ -1,19 +1,6 @@
 var exec = require("child_process").exec;
 var fs = require("fs");
 
-function files(response) {
-    console.log("Request handler for 'files' was called.");
-    exec(
-        "ls -lah",
-        function(error, stdout, stderr) {
-            console.log("ls -alh callback.");
-            response.writeHead(200, {"Content-Type" : "text/plain"});
-            response.write(stdout);
-            response.end();
-        }
-    );
-}
-
 function textArea(response) {
     console.log("Request handler for 'TextArea' was called.");
     var body = 
@@ -44,16 +31,26 @@ function slides(response) {
     console.log("Request handler for 'slides' was called");
 }
 
+function files(path, response) {
+    console.log("Show " + path + " files... ");
+    var cmd = "ls -lh " + path;
+    exec(
+        cmd,
+        function(error, stdout, stderr) {
+            response.writeHead(200, {"Content-Type" : "text/plain"});
+            response.write(stdout);
+            response.end();
+        }
+    );
+}
+
+
 function openFile(path, response) {
-    console.log("Request handler for 'openFile' was called");
-    if(path.substring(0,1) === "/") {
-        path = path.substring(1, path.length + 1);
-    }
+    console.log("Open file " + path + " ...");
     if(! fs.existsSync(path)) {
         console.log("File " + path + " doesn't exist");
         return false;
     } else {
-        console.log("File " + path + " exists");
         fs.readFile(
             path,
             "utf8",
@@ -63,12 +60,9 @@ function openFile(path, response) {
                 response.end();
             }
         );
-
         return true;
     }
 }
 
 exports.files = files;
-exports.textArea = textArea;
-exports.upload = upload;
 exports.openFile = openFile;
