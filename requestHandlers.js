@@ -1,8 +1,9 @@
 var exec = require("child_process").exec;
 var fs = require("fs");
+var logger = require("./logger");
 
 function textArea(response) {
-    console.log("Request handler for 'TextArea' was called.");
+    logger.i("Request handler for 'TextArea' was called.");
     var body = 
         '<html>' +
             '<head>' +
@@ -21,18 +22,18 @@ function textArea(response) {
 }
 
 function upload(response) {
-    console.log("Request handler for 'upload' was called.");
+    logger.i("Request handler for 'upload' was called.");
     response.writeHead(200, {"Content-Type" : "text/plain"});
     response.write("upload");
     response.end();
 }
 
 function slides(response) {
-    console.log("Request handler for 'slides' was called");
+    logger.i("Request handler for 'slides' was called");
 }
 
 function files(path, response) {
-    console.log("Show " + path + " files... ");
+    logger.i("Show " + path + " files... ");
     var cmd = "ls -lh " + path;
     exec(
         cmd,
@@ -46,9 +47,9 @@ function files(path, response) {
 
 
 function openFile(path, response) {
-    console.log("Open file " + path + " ...");
+    logger.i("Open file " + path + " ...");
     if(! fs.existsSync(path)) {
-        console.log("File " + path + " doesn't exist");
+        logger.w("File " + path + " doesn't exist");
         return false;
     } else {
         fs.readFile(

@@ -1,8 +1,9 @@
 var fs = require("fs");
 var requestHandlers = require("./requestHandlers");
+var logger = require("./logger");
 
 function route(pathName, response) {
-    console.log("About to route a request for " + pathName);
+    logger.v("About to route a request for " + pathName);
     
     try {
         if(pathName !== "/" && pathName.length !== 0) {
@@ -11,19 +12,19 @@ function route(pathName, response) {
             }
             var fileStats = fs.statSync(pathName);
             if(fileStats.isDirectory()) {
-                console.log("A directory is requested...");
+                logger.v("A directory is requested...");
                 requestHandlers.files(pathName, response);
             } else if (fileStats.isFile()) {
-                console.log("A file is requested...");
+                logger.v("A file is requested...");
                 requestHandlers.openFile(pathName, response);
             }
             return;
         } 
     } catch (e) {
-        console.log("An exception was thrown " + e);
+        logger.e("An exception was thrown " + e);
     }
 
-    console.log("Cannot handle the path!");
+    logger.w("Cannot handle the path " + pathName);
     response.writeHead(404, {"Content-Type": "text/plain"});
     response.write("404 Not Found!");
     response.end();
