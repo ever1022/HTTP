@@ -8,7 +8,7 @@ function route(request, response) {
     
     try {
         if(pathName === "/") {
-            requestHandlers.files("", response);
+            requestHandlers.filesToHtml("", response);
             return;
         } else if(pathName.length !== 0) {
             if(pathName.substring(0,1) === "/") {
@@ -17,7 +17,7 @@ function route(request, response) {
             var fileStats = fs.statSync(pathName);
             if(fileStats.isDirectory()) {
                 logger.v("A directory is requested...");
-                requestHandlers.files(pathName, response);
+                requestHandlers.filesToHtml(pathName, response);
             } else if (fileStats.isFile()) {
                 if(pathName.endsWith(".md") && url.parse(request.url).query === "reveal.js") {
                     logger.v("Open markdwon with reveal.js...");

@@ -30,7 +30,7 @@ function upload(response) {
 }
 
 function slides(response) {
-    logger.i("Request handler for 'slides' was called");
+    logger.i("Request handler for 'slides' was called.");
 }
 
 function files(pathName, response) {
@@ -41,6 +41,41 @@ function files(pathName, response) {
         function(error, stdout, stderr) {
             response.writeHead(200, {"Content-Type" : "text/plain"});
             response.write(stdout);
+            response.end();
+        }
+    );
+}
+
+function filesToHtml(pathName, response) {
+    logger.i("Show " + pathName + " files... ");
+    var cmd = "ls " + pathName;
+    exec(
+        cmd,
+        function(error, stdout, stderr) {
+	    var lines = stdout.toString().split('\n');
+            response.writeHead(200, {"Content-Type" : "text/html"});
+    	    var body = 
+        	'<html>' +
+            	'<head>' +
+                    '<meta http-equiv="Content-Type" content="text/html;" charset="UTF-8"/>' +
+            	'</head>' +
+            	'<body>';
+	    lines.forEach(function(line) {
+                var preLinkPath = "http://localhost:8888/" + pathName;
+	        if(preLinkPath.endsWith("/")) {
+                    body = body +
+                        line.link(preLinkPath + line) +
+                        '<br>';
+		} else {
+                    body = body +
+                        line.link(preLinkPath + "/" +  line) +
+                        '<br>';
+		}
+	    });
+	    bosy = body + 
+            	'</body>' +
+        	'</html>';
+    	    response.write(body);
             response.end();
         }
     );
@@ -89,4 +124,5 @@ function openMarkdownInRevealjs(pathName, response) {
 
 exports.files = files;
 exports.openFile = openFile;
+exports.filesToHtml = filesToHtml;
 exports.openMarkdownInRevealjs = openMarkdownInRevealjs;

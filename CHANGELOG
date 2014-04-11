@@ -1,4 +1,7 @@
 2014.04.11
+Support file hyperlink when browsing a directory.
+
+2014.04.11
 Sync local codes, which contains:
 1. queue, pub/sub modules
 2. mongodb provider, tester
