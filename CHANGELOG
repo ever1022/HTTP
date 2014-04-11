@@ -1,3 +1,13 @@
+2014.04.11
+Sync local codes, which contains:
+1. queue, pub/sub modules
+2. mongodb provider, tester
+
+2014.03.17
+Install MongoDB
+Install node-mongodb-native
+Add queue, pubsub (Publish/Subscribe) models.
+
 2014.03.07
 Support reveal.js + Markdown
 1. write a html to embed the markdown file.

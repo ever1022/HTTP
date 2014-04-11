@@ -3,9 +3,8 @@ var url = require("url");
 var requestHandlers = require("./requestHandlers");
 var logger = require("./logger");
 
-function route(requestUrl, response) {
-    logger.v("About to route a request for " + pathName);
-    var pathName = url.parse(requestUrl).pathname;
+function route(request, response) {
+    var pathName = url.parse(request.url).pathname;
     
     try {
         if(pathName === "/") {
@@ -20,7 +19,7 @@ function route(requestUrl, response) {
                 logger.v("A directory is requested...");
                 requestHandlers.files(pathName, response);
             } else if (fileStats.isFile()) {
-                if(pathName.endsWith(".md") && url.parse(requestUrl).query === "reveal.js") {
+                if(pathName.endsWith(".md") && url.parse(request.url).query === "reveal.js") {
                     logger.v("Open markdwon with reveal.js...");
                     requestHandlers.openMarkdownInRevealjs(pathName, response);
                     return;
