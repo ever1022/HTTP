@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html;" charset="UTF-8"/>
+            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript">
+            </script>
+            <script type="text/javascript">
+                var httpRequest;
+                function promptIdRequest() {
+                    var userId = prompt("ID");
+                    if(userId != null) {
+                        submitId(userId);
+                    } else {
+                        // TODO
+                    }
+                }
+                
+                function submitId(userId) {
+                    //var formData = new FormData();
+                    //formData.append("userid", userId);
+                    var data = {"userid" : userId};
+                    var stringData = JSON.stringify(data);
+
+                    httpRequest = new XMLHttpRequest();
+                    httpRequest.open("POST", "http://localhost:8888/checkUserId");
+                    httpRequest.onreadystatechange = onResponseDataReceived; 
+                    //httpRequest.send(formData);
+                    httpRequest.send(stringData);
+                    console.log("Submit done.");
+                }
+
+                function onResponseDataReceived() {
+                    if(httpRequest.readyState == 4) {
+                        if (httpRequest.status == 200) {
+                            document.open();
+                            document.write(httpRequest.responseText);
+                            document.close();
+                        } else {
+                            alert ("ID Authentication Error! " + httpRequest.status);
+                        }
+                    }
+                }
+            </script>
+            <script type="text/javascript">
+                $(document).ready(promptIdRequest());
+            </script>
+        </head>
+        <body>
+        </body>
+    </html>
