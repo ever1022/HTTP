@@ -12,7 +12,7 @@ function textArea(response) {
             '</head>' +
             '<body>' +
                 '<form action="/upload" method="post">' +
-                    '<textarea name="text" rows="20" cols="60"></textarea>' +
+                    '<textarea name="text" rows="1" cols="10"></textarea>' +
                     '<input type="submit" value="Submit text" />' +
                 '</form>' +
             '</body>' +
@@ -122,7 +122,35 @@ function openMarkdownInRevealjs(pathName, response) {
     }
 }
 
+function requestUserId(response) {
+    openFile("html/auth/idrequest.html", response);
+}
+
+function requestCredential(userId, response) {
+    var cookies = "user=" + userId;
+    fs.readFile(
+        "html/auth/credentialrequest.html",
+        "utf8",
+        function(err, data) {
+            response.writeHead(200, {"ContentType": "text/html", "Set-Cookie" : cookies});
+            response.write(data);
+            response.end();
+        }
+    );
+}
+
+function setCookies(response) {
+    logger.v("setCookies");
+    var cookies = "expires = " + new Date().getTime() + 20 * 60 * 1000;
+    response.writeHead(200, {"Set-Cookie" : cookies});
+    response.end();
+}
+
 exports.files = files;
 exports.openFile = openFile;
 exports.filesToHtml = filesToHtml;
 exports.openMarkdownInRevealjs = openMarkdownInRevealjs;
+exports.requestUserId = requestUserId;
+exports.requestCredential = requestCredential;
+exports.setCookies = setCookies;
+exports.textArea = textArea;
