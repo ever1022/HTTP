@@ -4,77 +4,80 @@ var mongodb = require("mongodb");
 var myErrorCodes = require("./myErrorCodes");
 var pubsubMain = pubsub.getInstance();
 
+var TAG = "dbProvider";
+
 function dbProvider(host, port, dbName) {
     this.databaseName = dbName;
     this.db = new mongodb.Db(dbName, new mongodb.Server(host, port), {"safe" : false});
 
-    logger.v("Connect database...");
+    logger.v(TAG, "Connect database...");
     this.db.open(function(error) {
         if(error) {
-            logger.e("Cannot open db " + dbName + "!");
+            logger.e(TAG, "Cannot open db " + dbName + "!");
             pubsubMain.publish(dbName, myErrorCodes.ERROR); 
             return;
         }
-        logger.v("Done open database " + dbName + ".");
+        logger.v(TAG, "Done open database " + dbName + ".");
         pubsubMain.publish(dbName, myErrorCodes.NO_ERROR); 
     });
 }
 
 dbProvider.prototype = {
     getCollection: function(collectionName, callback) {
-        logger.v("Get collection...");
+        logger.v(TAG, "Get collection...");
         var db = this.db;
         pubsubMain.subscribe(
             this.databaseName,
             function(data) {
                 if(data === myErrorCodes.NO_ERROR) {
-                    logger.v("Database is ready.");
+                    logger.v(TAG, "Database is ready.");
                     db.collection(
                         collectionName,
                         function(error, result) {
                             if(error) {
-                                logger.e(error);
+                                logger.e(TAG, error);
                                 callback(error);
                             } else {
-                                logger.v("Get collection done.");
+                                logger.v(TAG, "Get collection done.");
                                 callback(null, result);
                             }
                         }
                     );
                 } else {
-                    logger.v("Database occurrs error!");
+                    logger.v(TAG, "Database occurrs error!");
                 }
-            }
+            },
+            true
         );
     }
 }
 
 function verifyUser(jsonString, callback) {
     var user = JSON.parse(jsonString);
-    logger.v("User id: " + jsonString);
+    logger.v(TAG, "User id: " + jsonString);
     dbp.getCollection(
         "user_pool",
         function(error, result) {
-            logger.v("db query callback " + result);
+            logger.v(TAG, "db query callback " + result);
             if(error) {
-                logger.v("error...");
+                logger.v(TAG, "error...");
                 callback("FAIL");
             } else {
-                logger.v("success...");
+                logger.v(TAG, "success...");
                 var cursor = result.find({"user_id" : user.user_id}, {"pwd" : user.pwd});
                 if(cursor.count() > 0) {
                     cursor.toArray(function(error, documents) {
-                        logger.v("toArray done...");
+                        logger.v(TAG, "toArray done...");
                         if(ducuments.length != 0) {
-                            logger.i("OK");
+                            logger.i(TAG, "OK");
                             callback("OK");
                         } else {
-                            logger.i("FAIL");
+                            logger.i(TAG, "FAIL");
                             callback("FAIL");
                         }
                     });
                 } else {
-                    logger.v("done...");
+                    logger.v(TAG, "done...");
                     callback("FAIL");
                 }
             }
@@ -91,19 +94,19 @@ function selfTest() {
         "test_collection",
         function(error, result) {
             if(error) {
-                logger.e(error);
+                logger.e(TAG, error);
             } else {
                 var cursor = result.find();
                 var documentArray = cursor.toArray(function callback(error, documents) {
                     var documentsCount = documents.length;
                     for(var index = 0; index < documentsCount; index++) {
-                        logger.v("" + JSON.stringify(documents[index]));
+                        logger.v(TAG, "" + JSON.stringify(documents[index]));
                     }
                 });
             }
         }
     );
 }
+//selfTest();
 
-selfTest();
 exports.dbProvider = dbProvider;

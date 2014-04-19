@@ -16,15 +16,12 @@
                 }
                 
                 function submitId(userId) {
-                    //var formData = new FormData();
-                    //formData.append("userid", userId);
                     var data = {"userid" : userId};
                     var stringData = JSON.stringify(data);
 
                     httpRequest = new XMLHttpRequest();
                     httpRequest.open("POST", "http://localhost:8888/checkUserId");
                     httpRequest.onreadystatechange = onResponseDataReceived; 
-                    //httpRequest.send(formData);
                     httpRequest.send(stringData);
                     console.log("Submit done.");
                 }

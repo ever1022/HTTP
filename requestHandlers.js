@@ -2,9 +2,10 @@ var exec = require("child_process").exec;
 var fs = require("fs");
 var logger = require("./logger");
 var path = require("path");
+var TAG = "requestHandlers";
 
 function textArea(response) {
-    logger.i("Request handler for 'TextArea' was called.");
+    logger.i(TAG, "Request handler for 'TextArea' was called.");
     var body = 
         '<html>' +
             '<head>' +
@@ -23,18 +24,18 @@ function textArea(response) {
 }
 
 function upload(response) {
-    logger.i("Request handler for 'upload' was called.");
+    logger.i(TAG, "Request handler for 'upload' was called.");
     response.writeHead(200, {"Content-Type" : "text/plain"});
     response.write("upload");
     response.end();
 }
 
 function slides(response) {
-    logger.i("Request handler for 'slides' was called.");
+    logger.i(TAG, "Request handler for 'slides' was called.");
 }
 
 function files(pathName, response) {
-    logger.i("Show " + pathName + " files... ");
+    logger.i(TAG, "Show " + pathName + " files... ");
     var cmd = "ls -lh " + pathName;
     exec(
         cmd,
@@ -47,7 +48,7 @@ function files(pathName, response) {
 }
 
 function filesToHtml(pathName, response) {
-    logger.i("Show " + pathName + " files... ");
+    logger.i(TAG, "Show " + pathName + " files... ");
     var cmd = "ls " + pathName;
     exec(
         cmd,
@@ -83,9 +84,9 @@ function filesToHtml(pathName, response) {
 
 
 function openFile(pathName, response) {
-    logger.i("Open file " + pathName + " ...");
+    logger.i(TAG, "Open file " + pathName + " ...");
     if(! fs.existsSync(pathName)) {
-        logger.w("File " + pathName + " doesn't exist!");
+        logger.w(TAG, "File " + pathName + " doesn't exist!");
         return false;
     } else {
         fs.readFile(
@@ -102,9 +103,9 @@ function openFile(pathName, response) {
 }
 
 function openMarkdownInRevealjs(pathName, response) {
-    logger.i("Open markdown file " + pathName + " with reveal.js...");
+    logger.i(TAG, "Open markdown file " + pathName + " with reveal.js...");
     if(! fs.existsSync(pathName)) {
-        logger.w("File " + pathName + " doesn't exist!");
+        logger.w(TAG, "File " + pathName + " doesn't exist!");
         return false;
     } else {
         var fileName = path.basename(pathName);
@@ -140,7 +141,7 @@ function requestCredential(userId, response) {
 }
 
 function setCookies(response) {
-    logger.v("setCookies");
+    logger.v(TAG, "setCookies");
     var cookies = "expires = " + new Date().getTime() + 20 * 60 * 1000;
     response.writeHead(200, {"Set-Cookie" : cookies});
     response.end();
