@@ -2,6 +2,7 @@ var exec = require("child_process").exec;
 var fs = require("fs");
 var logger = require("./logger");
 var path = require("path");
+var mime = require("mime");
 var TAG = "requestHandlers";
 
 function textArea(response) {
@@ -84,7 +85,12 @@ function filesToHtml(pathName, response) {
 
 
 function openFile(pathName, response) {
-    logger.i(TAG, "Open file " + pathName + " ...");
+    logger.i(TAG, "Open file " + pathName + ", mime type: " + mime.lookup(pathName));
+    var mimeType = mime.lookup(pathName).toString();
+    if(mimeType.startsWith("image")) {
+        return openImageFile(pathName, response);
+    }
+ 
     if(! fs.existsSync(pathName)) {
         logger.w(TAG, "File " + pathName + " doesn't exist!");
         return false;
@@ -101,6 +107,32 @@ function openFile(pathName, response) {
         return true;
     }
 }
+
+function openImageFile(pathName, response) {
+    logger.v(TAG, "Open an image file.");
+    if(! fs.existsSync(pathName)) {
+        logger.w(TAG, "File " + pathName + " doesn't exist!");
+        return false;
+    } else {
+        fs.readFile(
+            pathName,
+            "binary",
+            function(err, data) {
+                if(err) {
+                    response.writeHead(500, {"Content-Type": "text/plain"});
+                    response.write(error + "\n");
+                    response.end();
+                } else {
+                    response.writeHead(200, {"ContentType": mime.lookup(pathName)});
+                    response.write(data, "binary");
+                    response.end();
+                }
+            }
+        );
+        return true;
+    }
+}
+
 
 function openMarkdownInRevealjs(pathName, response) {
     logger.i(TAG, "Open markdown file " + pathName + " with reveal.js...");
