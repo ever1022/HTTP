@@ -62,7 +62,7 @@ function filesToHtml(pathName, response) {
             	'</head>' +
             	'<body>';
 	    lines.forEach(function(line) {
-                var preLinkPath = "http://localhost:8888/" + pathName;
+                var preLinkPath = "/" + pathName;
 	        if(preLinkPath.endsWith("/")) {
                     body = body +
                         line.link(preLinkPath + line) +
@@ -124,7 +124,16 @@ function openMarkdownInRevealjs(pathName, response) {
 }
 
 function requestUserId(response) {
-    openFile("html/auth/idrequest.html", response);
+    var session = "session = " + makeSessionId();
+    fs.readFile(
+        "html/auth/idrequest.html",
+        "utf8",
+        function(err, data) {
+            response.writeHead(200, {"ContentType": "text/html", "Set-Cookie" : session});
+            response.write(data);
+            response.end();
+        }
+    );
 }
 
 function requestCredential(userId, response) {
@@ -138,6 +147,11 @@ function requestCredential(userId, response) {
             response.end();
         }
     );
+}
+
+function makeSessionId() {
+    var sessionId = "SID" + new Date().getTime();
+    return sessionId;
 }
 
 function setCookies(response) {
