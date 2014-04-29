@@ -89,6 +89,8 @@ function openFile(pathName, response) {
     var mimeType = mime.lookup(pathName).toString();
     if(mimeType.startsWith("image")) {
         return openImageFile(pathName, response);
+    } else if(mimeType == "text/plain") {
+        openTextPlainFile(pathName, response);
     }
  
     if(! fs.existsSync(pathName)) {
@@ -133,6 +135,30 @@ function openImageFile(pathName, response) {
     }
 }
 
+function openTextPlainFile(pathName, response) {
+    logger.v(TAG, "Open a plain text file.");
+    if(! fs.existsSync(pathName)) {
+        logger.w(TAG, "File " + pathName + " doesn't exist!");
+        return false;
+    } else {
+        fs.readFile(
+            pathName,
+            "utf8",
+            function(err, data) {
+                if(err) {
+                    response.writeHead(500, {"Content-Type": "text/plain"});
+                    response.write(error + "\n");
+                    response.end();
+                } else {
+                    response.writeHead(200, {"Content-Type": "text/plain"});
+                    response.write(data);
+                    response.end();
+                }
+            }
+        );
+        return true;
+    }
+}
 
 function openMarkdownInRevealjs(pathName, response) {
     logger.i(TAG, "Open markdown file " + pathName + " with reveal.js...");
