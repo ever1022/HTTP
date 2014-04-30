@@ -64,6 +64,9 @@ function route(request, response, postData) {
             case "/":
                 requestHandlers.filesToHtml("", response);
                 break;
+            case "/uploadFile":
+                requestHandlers.uploadFile(request, response);
+                break;
             default:
                 if(pathName.length !== 0) {
                     if(pathName.substring(0,1) === "/") {

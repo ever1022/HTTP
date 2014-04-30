@@ -3,6 +3,8 @@ var fs = require("fs");
 var logger = require("./logger");
 var path = require("path");
 var mime = require("mime");
+var formidable = require("formidable");
+var sys = require("sys");
 var TAG = "requestHandlers";
 
 function textArea(response) {
@@ -193,6 +195,24 @@ function setCookies(response) {
     response.end();
 }
 
+function uploadFile(request, response) {
+    logger.v(TAG, "uploadFile");
+    var form = new formidable.IncomingForm();
+    form.parse(
+        request,
+        function(error, fields, files) {
+            if(error) {
+                logger.e(TAG, "Cannot upload the file!");
+            } else {
+                logger.v(TAG, "Done upload the file.");
+                response.writeHead(200, {'content-type': 'text/plain'});
+                response.write('Received upload:\n\n');
+                response.end(sys.inspect({fields: fields, files: files}));
+            }
+        }
+    );
+}
+
 exports.files = files;
 exports.openFile = openFile;
 exports.filesToHtml = filesToHtml;
@@ -201,3 +221,4 @@ exports.requestUserId = requestUserId;
 exports.requestCredential = requestCredential;
 exports.setCookies = setCookies;
 exports.textArea = textArea;
+exports.uploadFile = uploadFile;
