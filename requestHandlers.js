@@ -6,6 +6,7 @@ var mime = require("mime");
 var formidable = require("formidable");
 var sys = require("sys");
 var markdown = require("markdown").markdown;
+var url = require("url");
 var TAG = "requestHandlers";
 
 function textArea(response) {
@@ -87,7 +88,7 @@ function filesToHtml(pathName, response) {
 }
 
 
-function openFile(pathName, response) {
+function openFile(pathName, request, response) {
     logger.i(TAG, "Open file " + pathName + ", mime type: " + mime.lookup(pathName));
     var mimeType = mime.lookup(pathName).toString();
     if(mimeType.startsWith("image")) {
@@ -95,7 +96,13 @@ function openFile(pathName, response) {
     } else if(mimeType == "text/plain") {
         return openTextPlainFile(pathName, response);
     } else if(mimeType == "text/x-markdown") {
-        return openMarkdownFile(pathName, response);
+        if(url.parse(request.url).query === "reveal.js") {
+            return openMarkdownInRevealjs(pathName, response);
+        } else if(url.parse(request.url).query === "markdown.js") {
+            return openMarkdownFile(pathName, response);
+        } else {
+            return openTextPlainFile(pathName, response);
+        }
     }
  
     if(! fs.existsSync(pathName)) {

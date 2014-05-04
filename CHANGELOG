@@ -1,6 +1,7 @@
 2014.05.04
 Support chat with socket.io
 Support open markdown file directly.
+Change default display for markdown file, for support open with reveal.js.
 
 2014.04.24
 Support open image files.
