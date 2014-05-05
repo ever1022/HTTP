@@ -64,6 +64,9 @@ function route(request, response, postData) {
             case "/":
                 requestHandlers.filesToHtml("", response);
                 break;
+            case "/uploadFile":
+                requestHandlers.uploadFile(request, response);
+                break;
             default:
                 if(pathName.length !== 0) {
                     if(pathName.substring(0,1) === "/") {
@@ -74,13 +77,13 @@ function route(request, response, postData) {
                         logger.v(TAG, "A directory is requested...");
                         requestHandlers.filesToHtml(pathName, response);
                     } else if (fileStats.isFile()) {
-                        if(pathName.endsWith(".md") && url.parse(request.url).query === "reveal.js") {
-                            logger.v(TAG, "Open markdwon with reveal.js...");
-                            requestHandlers.openMarkdownInRevealjs(pathName, response);
-                            return;
-                        }
+                        //if(pathName.endsWith(".md") && url.parse(request.url).query === "reveal.js") {
+                        //    logger.v(TAG, "Open markdwon with reveal.js...");
+                        //    requestHandlers.openMarkdownInRevealjs(pathName, response);
+                        //    return;
+                        //}
                         logger.v(TAG, "A file is requested...");
-                        requestHandlers.openFile(pathName, response);
+                        requestHandlers.openFile(pathName, request, response);
                     }
                 } 
         }
