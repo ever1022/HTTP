@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Key Event Demo</title>
+        <script type="text/javascript">
+            document.onkeydown = function(event) {
+                var key = String.fromCharCode(event.keyCode);
+                var keyCode = event.keyCode;
+                document.getElementById('status').innerHTML = "On key down: " + key;
+                document.getElementById('key_code').innerHTML = keyCode;
+            }
+            document.onkeyup = function(event){
+                var key = String.fromCharCode(event.keyCode);
+                document.getElementById('status').innerHTML = "On key up: " + key;
+            }
+        </script>
+	</head>
+	<body>
+        <p id="status"></p>
+        Key Code : <span id="key_code"></span>
+	</body>
+</html>
