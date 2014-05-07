@@ -4,7 +4,13 @@
 		<meta charset="utf-8">
 		<title>Youtube Play Control</title>
         <script type="text/javascript">
+            var player;
+            //var videolist = ['W5IYzovQbtQ', '0Fbias-67TQ', 'ZaRH8ep_ALg'];
+            var videolist = [];
+            var cmd = "";
+
             var CMD_PLAY = "play";
+            var CMD_PAUSE = "pause";
             var CMD_STOP = "stop";
             var CMD_REWIND = "rewind";
             var CMD_NEXT = "next";
@@ -12,15 +18,21 @@
             var CMD_VOLUME_UP = "volume_up";
             var CMD_VOLUME_DOWN = "volume_down";
             var CMD_SEEK_TO = "seek_to";
-            var cmd = "";
             document.onkeyup = function(event){
                 var key = String.fromCharCode(event.keyCode);
                 var keyCode = event.keyCode;
-                document.getElementById('key_code').innerHTML = keyCode;
+                document.getElementById('key_code').innerHTML = key + "(" + keyCode + ")";
                 switch(key) {
                     case "p":
                     case "P":
-                        executeCommand(CMD_PLAY);
+                        if(player) {
+                            var state = player.getPlayerState();
+                            if(state == YT.PlayerState.PLAYING) {
+                                executeCommand(CMD_PAUSE);
+                            } else {
+                                executeCommand(CMD_PLAY);
+                            }
+                        }
                         return;
                     case "S":
                     case "s":
@@ -45,7 +57,7 @@
                         var seekTo = currentTime + parseInt(cmd);
                         if(seekTo > duration) {
                             console.log("Cannot seek to " + seekTo);
-                            document.getElementById('cmd').innerHTML = "Invalid command!";
+                            updateStatusInfo("Invalid command!");
                             cmd = "";
                         } else {
                             executeCommand(CMD_SEEK_TO, seekTo);
@@ -58,7 +70,7 @@
                         var seekTo = currentTime - parseInt(cmd);
                         if(seekTo < 0) {
                             console.log("Cannot seek to " + seekTo);
-                            document.getElementById('cmd').innerHTML = "Invalid command!";
+                            updateStatusInfo("Invalid command!");
                             cmd = "";
                         } else {
                             executeCommand(CMD_SEEK_TO, seekTo);
@@ -78,7 +90,7 @@
                         if(cmd.length > 4) {
                             cmd = "";
                         }
-                        document.getElementById('cmd').innerHTML = cmd;
+                        updateStatusInfo(cmd);
                         return;
                 }
 
@@ -88,6 +100,9 @@
                         break;
                     case 173:
                         executeCommand(CMD_VOLUME_DOWN);
+                        break;
+                    case 219:
+                        showAddVideoPrompt();
                         break;
                 }
             }
@@ -99,19 +114,12 @@
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
             console.log("Create a YouTube player...");
-            var player;
             function onYouTubeIframeAPIReady() {
                 console.log("Youtube Iframe API is ready.");
                 player = new YT.Player(
                     'player', {
                         height: '390',
                         width: '640',
-                        loadPlaylist: {
-                            listType: 'playlist',
-                            list: [],
-                            index: parseInt(0),
-                            suggestedQuality: 'small'
-                        },
                         events: {
                             'onReady': onPlayerReady,
                             'onStateChange': onPlayerStateChange
@@ -122,18 +130,25 @@
             
             function onPlayerReady(event) {
                 console.log("Player is ready.");
-                event.target.loadPlaylist(['W5IYzovQbtQ', '0Fbias-67TQ']);
-                event.target.playVideo();
+                if(videolist.length > 0) {
+                    event.target.loadPlaylist(videolist);
+                }
             }
 
             function onPlayerStateChange(event) {
                 console.log("Player state changes " + event.data);
+                if (event.data == YT.PlayerState.CUED) {
+                    event.target.playVideo();
+                }
             }
 
             function executeCommand(commandToExecute, value) {
                 switch(commandToExecute) {
                     case CMD_PLAY:
                         playVideo();
+                        break;
+                    case CMD_PAUSE:
+                        pauseVideo();
                         break;
                     case CMD_STOP:
                         stopVideo();
@@ -160,11 +175,18 @@
                         break;
                 }
                 cmd = "";
+                updateStatusInfo(cmd);
             }
 
             function playVideo() {
                 console.log("playVideo");
                 player.playVideo();
+            }
+
+            
+            function pauseVideo() {
+                console.log("pauseVideo");
+                player.pauseVideo();
             }
 
             function stopVideo() {
@@ -211,12 +233,67 @@
                 }
                 player.setVolume(volume);
             }
+
+            function showAddVideoPrompt() {
+                if(player) {
+                    player.pauseVideo();
+                }
+                var videoUrl = prompt("Add video");
+                console.log("Add video: " + videoUrl);
+                var videoId = parseVideoUrl(videoUrl);
+                if(videoId) {
+                    updateStatusInfo("Video " + videoId + " is added.");
+                    videolist.push(videoId);
+                    loadVideoTitle(videoId);
+                    if(player) {
+                        var currentPlayIndex = player.getPlaylistIndex();
+                        if(! currentPlayIndex) {
+                            currentPlayIndex = 0;
+                        }
+                        var currentTime = player.getCurrentTime();
+                        if(! currentTime) {
+                            currentTime = 0;
+                        }
+                        player.cuePlaylist(videolist, currentPlayIndex, currentTime, "default");
+                    }
+                } else {
+                    updateStatusInfo("Invalid video URL!");
+                    if(player) {
+                        player.playVideo();
+                    }
+                }
+            }
+
+            function parseVideoUrl(url) {
+                var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                var match = url.match(regExp);
+                if (match && match[2].length==11) {
+                    return match[2];
+                }
+            }
+
+            function loadVideoTitle(videoId) {
+                console.log("loadVideoTitle");
+                var gdata = document.createElement("script");
+                gdata.src = "http://gdata.youtube.com/feeds/api/videos/" + videoId + "?v=2&alt=jsonc&callback=loadVideoTitleCallback";
+                var body = document.getElementsByTagName("body")[0];
+                body.appendChild(gdata);
+            }
+
+            function loadVideoTitleCallback(info) {
+                console.log("id: " + info.data.id);
+                console.log("title: " + info.data.title);
+            }
+
+            function updateStatusInfo(msg) {
+                document.getElementById('status').innerHTML = msg;
+            }
         </script>
 	</head>
 	<body>
         <div id="player"></div>
         </br>
-        Key Code : <span id="key_code"></span>
-        Command : <span id="cmd"></span>
+        Key Code: <span id="key_code"></span>
+        Status: <span id="status"></span>
 	</body>
 </html>
