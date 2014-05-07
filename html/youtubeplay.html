@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Youtube Play Control</title>
+        <script type="text/javascript">
+            var CMD_PLAY = "play";
+            var CMD_STOP = "stop";
+            var CMD_REWIND = "rewind";
+            var CMD_NEXT = "next";
+            var CMD_PREVIOUS = "previous";
+            var CMD_VOLUME_UP = "volume_up";
+            var CMD_VOLUME_DOWN = "volume_down";
+            var CMD_SEEK_TO = "seek_to";
+            var cmd = "";
+            document.onkeyup = function(event){
+                var key = String.fromCharCode(event.keyCode);
+                var keyCode = event.keyCode;
+                document.getElementById('key_code').innerHTML = keyCode;
+                switch(key) {
+                    case "p":
+                    case "P":
+                        executeCommand(CMD_PLAY);
+                        return;
+                    case "S":
+                    case "s":
+                        executeCommand(CMD_STOP);
+                        return;
+                    case "R":
+                    case "r":
+                        executeCommand(CMD_REWIND);
+                        return;
+                    case "N":
+                    case "n":
+                        executeCommand(CMD_NEXT);
+                        return;
+                    case "B":
+                    case "b":
+                        executeCommand(CMD_PREVIOUS);
+                        return;
+                    case "A":
+                    case "a":
+                        var currentTime = player.getCurrentTime();
+                        var duration = player.getDuration();
+                        var seekTo = currentTime + parseInt(cmd);
+                        if(seekTo > duration) {
+                            console.log("Cannot seek to " + seekTo);
+                            document.getElementById('cmd').innerHTML = "Invalid command!";
+                            cmd = "";
+                        } else {
+                            executeCommand(CMD_SEEK_TO, seekTo);
+                        }
+                        return;
+                    case "D":
+                    case "d":
+                        var currentTime = player.getCurrentTime();
+                        var duration = player.getDuration();
+                        var seekTo = currentTime - parseInt(cmd);
+                        if(seekTo < 0) {
+                            console.log("Cannot seek to " + seekTo);
+                            document.getElementById('cmd').innerHTML = "Invalid command!";
+                            cmd = "";
+                        } else {
+                            executeCommand(CMD_SEEK_TO, seekTo);
+                        }
+                        return;
+                    case "0":
+                    case "1":
+                    case "2":
+                    case "3":
+                    case "4":
+                    case "5":
+                    case "6":
+                    case "7":
+                    case "8":
+                    case "9":
+                        cmd = cmd + key;
+                        if(cmd.length > 4) {
+                            cmd = "";
+                        }
+                        document.getElementById('cmd').innerHTML = cmd;
+                        return;
+                }
+
+                switch(keyCode) {
+                    case 61:
+                        executeCommand(CMD_VOLUME_UP);
+                        break;
+                    case 173:
+                        executeCommand(CMD_VOLUME_DOWN);
+                        break;
+                }
+            }
+
+            console.log("Load the IFrame Player API code asynchronously...");
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            console.log("Create a YouTube player...");
+            var player;
+            function onYouTubeIframeAPIReady() {
+                console.log("Youtube Iframe API is ready.");
+                player = new YT.Player(
+                    'player', {
+                        height: '390',
+                        width: '640',
+                        loadPlaylist: {
+                            listType: 'playlist',
+                            list: [],
+                            index: parseInt(0),
+                            suggestedQuality: 'small'
+                        },
+                        events: {
+                            'onReady': onPlayerReady,
+                            'onStateChange': onPlayerStateChange
+                        }
+                    }
+                );
+            }
+            
+            function onPlayerReady(event) {
+                console.log("Player is ready.");
+                event.target.loadPlaylist(['W5IYzovQbtQ', '0Fbias-67TQ']);
+                event.target.playVideo();
+            }
+
+            function onPlayerStateChange(event) {
+                console.log("Player state changes " + event.data);
+            }
+
+            function executeCommand(commandToExecute, value) {
+                switch(commandToExecute) {
+                    case CMD_PLAY:
+                        playVideo();
+                        break;
+                    case CMD_STOP:
+                        stopVideo();
+                        break;
+                    case CMD_REWIND:
+                        rewind();
+                        playVideo();
+                        break;
+                    case CMD_NEXT:
+                        playNextVideo();
+                        break;
+                    case CMD_PREVIOUS:
+                        playPreviousVideo();
+                        break;
+                    case CMD_VOLUME_UP:
+                        volumeUp();
+                        break;
+                    case CMD_VOLUME_DOWN:
+                        volumeDown();
+                        break;
+                    case CMD_SEEK_TO:
+                        seekTo(value);
+                        playVideo();
+                        break;
+                }
+                cmd = "";
+            }
+
+            function playVideo() {
+                console.log("playVideo");
+                player.playVideo();
+            }
+
+            function stopVideo() {
+                console.log("stopVideo");
+                player.stopVideo();
+            }
+
+            function rewind() {
+                console.log("rewind");
+                player.seekTo(0, true);
+            }
+
+            function seekTo(seconds) {
+                console.log("seekTo");
+                player.seekTo(seconds, true);
+            }
+
+            function playNextVideo() {
+                console.log("playNextVideo");
+                player.nextVideo();
+            }
+
+            function playPreviousVideo() {
+                console.log("playPreviousVideo");
+                player.previousVideo();
+            }
+
+            function volumeUp() {
+                console.log("volumeUp");
+                var volume = player.getVolume();
+                volume += 10;
+                if(volume > 100) {
+                    volume = 100;
+                }
+                player.setVolume(volume);
+            }
+
+            function volumeDown() {
+                console.log("volumeDown");
+                var volume = player.getVolume();
+                volume -= 10;
+                if(volume < 0) {
+                    volume = 0;
+                }
+                player.setVolume(volume);
+            }
+        </script>
+	</head>
+	<body>
+        <div id="player"></div>
+        </br>
+        Key Code : <span id="key_code"></span>
+        Command : <span id="cmd"></span>
+	</body>
+</html>
