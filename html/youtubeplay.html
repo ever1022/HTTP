@@ -5,8 +5,41 @@
 		<title>Youtube Play Control</title>
         <script type="text/javascript">
             var player;
-            //var videolist = ['W5IYzovQbtQ', '0Fbias-67TQ', 'ZaRH8ep_ALg'];
-            var videolist = [];
+            var videoList = {
+                videos: [],
+                size: function() {
+                    return this.videos.length;
+                },
+                addVideo: function(videoId) {
+                    var newVideo = {
+                        VIDEO_ID: videoId,
+                        VIDEO_TITLE: "unknown"
+                    }
+                    this.videos.push(newVideo);
+                },
+                getIdList: function() {
+                    var idList = [];
+                    for(var index = 0; index < this.videos.length; index++) {
+                        idList.push(this.videos[index].VIDEO_ID);
+                    }
+                    return idList;
+                },
+                updateVideoTitle: function(videoId, videoTitle) {
+                    console.log("id: " + videoId);
+                    console.log("title: " + videoTitle);
+                    for(var index = 0; index < this.videos.length; index++) {
+                        if(this.videos[index].VIDEO_ID === videoId) {
+                            this.videos[index].VIDEO_TITLE = videoTitle;
+                        }
+                    }
+                    this.showInfo();
+                },
+                showInfo: function() {
+                    for(var index = 0; index < this.videos.length; index++) {
+                        console.log(index + ". " + this.videos[index].VIDEO_TITLE + "(" + this.videos[index].VIDEO_ID + ")");
+                    }
+                }
+            }
             var cmd = "";
 
             var CMD_PLAY = "play";
@@ -18,6 +51,9 @@
             var CMD_VOLUME_UP = "volume_up";
             var CMD_VOLUME_DOWN = "volume_down";
             var CMD_SEEK_TO = "seek_to";
+
+            var VIDEO_ID = "video_id";
+            var VIDEO_TITLE = "video_title";
             document.onkeyup = function(event){
                 var key = String.fromCharCode(event.keyCode);
                 var keyCode = event.keyCode;
@@ -130,8 +166,8 @@
             
             function onPlayerReady(event) {
                 console.log("Player is ready.");
-                if(videolist.length > 0) {
-                    event.target.loadPlaylist(videolist);
+                if(videoList.size() > 0) {
+                    event.target.loadPlaylist(videoList.getIdList());
                 }
             }
 
@@ -243,7 +279,7 @@
                 var videoId = parseVideoUrl(videoUrl);
                 if(videoId) {
                     updateStatusInfo("Video " + videoId + " is added.");
-                    videolist.push(videoId);
+                    videoList.addVideo(videoId);
                     loadVideoTitle(videoId);
                     if(player) {
                         var currentPlayIndex = player.getPlaylistIndex();
@@ -254,7 +290,7 @@
                         if(! currentTime) {
                             currentTime = 0;
                         }
-                        player.cuePlaylist(videolist, currentPlayIndex, currentTime, "default");
+                        player.cuePlaylist(videoList.getIdList(), currentPlayIndex, currentTime, "default");
                     }
                 } else {
                     updateStatusInfo("Invalid video URL!");
@@ -281,8 +317,7 @@
             }
 
             function loadVideoTitleCallback(info) {
-                console.log("id: " + info.data.id);
-                console.log("title: " + info.data.title);
+                videoList.updateVideoTitle(info.data.id, info.data.title);
             }
 
             function updateStatusInfo(msg) {
