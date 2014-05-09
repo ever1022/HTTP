@@ -16,6 +16,15 @@
                         VIDEO_TITLE: "unknown"
                     }
                     this.videos.push(newVideo);
+                    console.log("Current videos size: " + this.size());
+                },
+                deleteVideo: function(deleteIndex) {
+                    if(deleteIndex < 0 || deleteIndex >= this.size()) {
+                        console.log("Invalide video index to delete: " + deleteIndex + ", current size: " + this.size() );
+                        return;
+                    }
+                    var deletedVideo = this.videos.splice(deleteIndex, 1);
+                    console.log("delete video " + deletedVideo[0].VIDEO_TITLE);
                 },
                 getIdList: function() {
                     var idList = [];
@@ -23,6 +32,13 @@
                         idList.push(this.videos[index].VIDEO_ID);
                     }
                     return idList;
+                },
+                getTitleList: function() {
+                    var titleList = [];
+                    for(var index = 0; index < this.videos.length; index++) {
+                        titleList.push(this.videos[index].VIDEO_TITLE);
+                    }
+                    return titleList;
                 },
                 updateVideoTitle: function(videoId, videoTitle) {
                     console.log("id: " + videoId);
@@ -88,29 +104,44 @@
                         return;
                     case "A":
                     case "a":
-                        var currentTime = player.getCurrentTime();
-                        var duration = player.getDuration();
-                        var seekTo = currentTime + parseInt(cmd);
-                        if(seekTo > duration) {
-                            console.log("Cannot seek to " + seekTo);
-                            updateStatusInfo("Invalid command!");
-                            cmd = "";
-                        } else {
-                            executeCommand(CMD_SEEK_TO, seekTo);
+                        if(player) {
+                            pauseVideo();
                         }
+                        var videoUrl = showAddVideoPrompt();
+                        var videoId = parseVideoUrl(videoUrl);
+                        if(videoId) {
+                            addVideo(videoId);
+                        } else {
+                            updateStatusInfo("Invalid video URL!");
+                            if(player && videoList.size() > 0) {
+                                playVideo();
+                            }
+                        }
+                        cmd = "";
                         return;
                     case "D":
                     case "d":
-                        var currentTime = player.getCurrentTime();
-                        var duration = player.getDuration();
-                        var seekTo = currentTime - parseInt(cmd);
-                        if(seekTo < 0) {
-                            console.log("Cannot seek to " + seekTo);
-                            updateStatusInfo("Invalid command!");
-                            cmd = "";
-                        } else {
-                            executeCommand(CMD_SEEK_TO, seekTo);
+                        var videoIndexToDelete = parseInt(cmd) - 1;
+                        videoList.deleteVideo(videoIndexToDelete);
+                        if(player) {
+                            if(videoList.size() == 0) {
+                                player.destroy();
+                                initYTPlayer();
+                            } else {
+                                var currentTime = player.getCurrentTime();
+                                if(! currentTime) {
+                                    currentTime = 0;
+                                }
+                                var currentPlayIndex = player.getPlaylistIndex();
+                                if(! currentPlayIndex || currentPlayIndex == videoIndexToDelete) {
+                                    currentPlayIndex = 0;
+                                    currentTime = 0;
+                                }
+                                player.cuePlaylist(videoList.getIdList(), currentPlayIndex, currentTime, "default");
+                            }
                         }
+                        updateVideoTitles();
+                        cmd = "";
                         return;
                     case "0":
                     case "1":
@@ -131,15 +162,36 @@
                 }
 
                 switch(keyCode) {
-                    case 61:
+                    case 61: /* + key */
                         executeCommand(CMD_VOLUME_UP);
                         break;
-                    case 173:
+                    case 173: /* - key */
                         executeCommand(CMD_VOLUME_DOWN);
                         break;
-                    case 219:
-                        showAddVideoPrompt();
-                        break;
+                    case 190: /* > key */
+                        var currentTime = player.getCurrentTime();
+                        var duration = player.getDuration();
+                        var seekTo = currentTime + parseInt(cmd);
+                        if(seekTo > duration) {
+                            console.log("Cannot seek to " + seekTo);
+                            updateStatusInfo("Invalid command!");
+                            cmd = "";
+                        } else {
+                            executeCommand(CMD_SEEK_TO, seekTo);
+                        }
+                        return;
+                    case 188: /* < key */
+                        var currentTime = player.getCurrentTime();
+                        var duration = player.getDuration();
+                        var seekTo = currentTime - parseInt(cmd);
+                        if(seekTo < 0) {
+                            console.log("Cannot seek to " + seekTo);
+                            updateStatusInfo("Invalid command!");
+                            cmd = "";
+                        } else {
+                            executeCommand(CMD_SEEK_TO, seekTo);
+                        }
+                        return;
                 }
             }
 
@@ -152,16 +204,7 @@
             console.log("Create a YouTube player...");
             function onYouTubeIframeAPIReady() {
                 console.log("Youtube Iframe API is ready.");
-                player = new YT.Player(
-                    'player', {
-                        height: '390',
-                        width: '640',
-                        events: {
-                            'onReady': onPlayerReady,
-                            'onStateChange': onPlayerStateChange
-                        }
-                    }
-                );
+                initYTPlayer();
             }
             
             function onPlayerReady(event) {
@@ -271,32 +314,23 @@
             }
 
             function showAddVideoPrompt() {
+                return prompt("Add video");
+            }
+
+            function addVideo(videoId) {
+                updateStatusInfo("Video " + videoId + " is added.");
+                videoList.addVideo(videoId);
+                loadVideoTitle(videoId);
                 if(player) {
-                    player.pauseVideo();
-                }
-                var videoUrl = prompt("Add video");
-                console.log("Add video: " + videoUrl);
-                var videoId = parseVideoUrl(videoUrl);
-                if(videoId) {
-                    updateStatusInfo("Video " + videoId + " is added.");
-                    videoList.addVideo(videoId);
-                    loadVideoTitle(videoId);
-                    if(player) {
-                        var currentPlayIndex = player.getPlaylistIndex();
-                        if(! currentPlayIndex) {
-                            currentPlayIndex = 0;
-                        }
-                        var currentTime = player.getCurrentTime();
-                        if(! currentTime) {
-                            currentTime = 0;
-                        }
-                        player.cuePlaylist(videoList.getIdList(), currentPlayIndex, currentTime, "default");
+                    var currentPlayIndex = player.getPlaylistIndex();
+                    if(! currentPlayIndex) {
+                        currentPlayIndex = 0;
                     }
-                } else {
-                    updateStatusInfo("Invalid video URL!");
-                    if(player) {
-                        player.playVideo();
+                    var currentTime = player.getCurrentTime();
+                    if(! currentTime) {
+                        currentTime = 0;
                     }
+                    player.cuePlaylist(videoList.getIdList(), currentPlayIndex, currentTime, "default");
                 }
             }
 
@@ -318,10 +352,38 @@
 
             function loadVideoTitleCallback(info) {
                 videoList.updateVideoTitle(info.data.id, info.data.title);
+                updateVideoTitles();
+            }
+
+            function updateVideoTitles() {
+                console.log("updateVideoTitles");
+                var playList = document.getElementById('play_list');
+                while(playList.firstChild) {
+                    playList.removeChild(playList.firstChild);
+                }
+                var titleList = videoList.getTitleList();
+                for(var index = 0; index < titleList.length; index++) {
+                    var entry = document.createElement('li');
+                    entry.appendChild(document.createTextNode(titleList[index]));
+                    playList.appendChild(entry);
+                }
             }
 
             function updateStatusInfo(msg) {
                 document.getElementById('status').innerHTML = msg;
+            }
+
+            function initYTPlayer() {
+                player = new YT.Player(
+                    'player', {
+                        height: '390',
+                        width: '640',
+                        events: {
+                            'onReady': onPlayerReady,
+                            'onStateChange': onPlayerStateChange
+                        }
+                    }
+                );
             }
         </script>
 	</head>
@@ -330,5 +392,6 @@
         </br>
         Key Code: <span id="key_code"></span>
         Status: <span id="status"></span>
+        <ul id="play_list"></ul>
 	</body>
 </html>
