@@ -5,6 +5,11 @@
 		<title>Youtube Play Control</title>
         <script type="text/javascript">
             var player;
+            var isDefaultSize = true;
+            var DEFAULT_PLAYER_WIDTH = 640;
+            var DEFAULT_PLAYER_HEIGHT = 390;
+            var windowWidth = DEFAULT_PLAYER_WIDTH;
+            var windowHeight = DEFAULT_PLAYER_HEIGHT;
             var videoList = {
                 videos: [],
                 size: function() {
@@ -67,6 +72,7 @@
             var CMD_VOLUME_UP = "volume_up";
             var CMD_VOLUME_DOWN = "volume_down";
             var CMD_SEEK_TO = "seek_to";
+            var CMD_FULL_SCREEN = "full_screen";
 
             var VIDEO_ID = "video_id";
             var VIDEO_TITLE = "video_title";
@@ -122,26 +128,32 @@
                     case "D":
                     case "d":
                         var videoIndexToDelete = parseInt(cmd) - 1;
-                        videoList.deleteVideo(videoIndexToDelete);
-                        if(player) {
-                            if(videoList.size() == 0) {
-                                player.destroy();
-                                initYTPlayer();
-                            } else {
-                                var currentTime = player.getCurrentTime();
-                                if(! currentTime) {
-                                    currentTime = 0;
+                        if(videoIndexToDelete >= 0 && videoIndexToDelete < videoList.size()) {
+                            videoList.deleteVideo(videoIndexToDelete);
+                            if(player) {
+                                if(videoList.size() == 0) {
+                                    player.destroy();
+                                    initYTPlayer();
+                                } else {
+                                    var currentTime = player.getCurrentTime();
+                                    if(! currentTime) {
+                                        currentTime = 0;
+                                    }
+                                    var currentPlayIndex = player.getPlaylistIndex();
+                                    if(! currentPlayIndex || currentPlayIndex == videoIndexToDelete) {
+                                        currentPlayIndex = 0;
+                                        currentTime = 0;
+                                    }
+                                    player.cuePlaylist(videoList.getIdList(), currentPlayIndex, currentTime, "default");
                                 }
-                                var currentPlayIndex = player.getPlaylistIndex();
-                                if(! currentPlayIndex || currentPlayIndex == videoIndexToDelete) {
-                                    currentPlayIndex = 0;
-                                    currentTime = 0;
-                                }
-                                player.cuePlaylist(videoList.getIdList(), currentPlayIndex, currentTime, "default");
                             }
+                            updateVideoTitles();
                         }
-                        updateVideoTitles();
                         cmd = "";
+                        return;
+                    case "X":
+                    case "x":
+                        executeCommand(CMD_FULL_SCREEN);
                         return;
                     case "0":
                     case "1":
@@ -252,6 +264,14 @@
                         seekTo(value);
                         playVideo();
                         break;
+                    case CMD_FULL_SCREEN:
+                        if(isDefaultSize) {
+                            stretchToFullScreen();
+                        } else {
+                            setPlayerSize(DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT);
+                            isDefaultSize = true;
+                        }
+                        break;
                 }
                 cmd = "";
                 updateStatusInfo(cmd);
@@ -311,6 +331,11 @@
                     volume = 0;
                 }
                 player.setVolume(volume);
+            }
+
+            function setPlayerSize(width, height) {
+                console.log("setPlayerSize: " + width + "x" + height);
+                player.setSize(width, height);
             }
 
             function showAddVideoPrompt() {
@@ -376,22 +401,49 @@
             function initYTPlayer() {
                 player = new YT.Player(
                     'player', {
-                        height: '390',
-                        width: '640',
+                        height: DEFAULT_PLAYER_HEIGHT,
+                        width: DEFAULT_PLAYER_WIDTH,
                         events: {
                             'onReady': onPlayerReady,
                             'onStateChange': onPlayerStateChange
                         }
                     }
                 );
+                isDefaultSize = true;
+            }
+            
+            function updateWindowSize() {
+                var documentElement = document.documentElement;
+                var bodyElement = document.getElementsByTagName('body')[0];
+                windowWidth = window.innerWidth || documentElement.clientWidth || bodyElement.clientWidth;
+                windowHeight = window.innerHeight|| documentElement.clientHeight|| bodyElement.clientHeight;
+                console.log("Windown size: " + windowWidth + " x " +  windowHeight);
+            }
+
+            function onWindowSizeChange() {
+                updateWindowSize();
+                if(! isDefaultSize) {
+                    stretchToFullScreen();
+                }
+            }
+
+            function stretchToFullScreen() {
+                var margin = 14;
+                var width = windowWidth - (margin * 2);
+                var height = windowHeight - (margin * 2);
+                width = width > 0? width : 0;
+                height = height > 0? height: 0;
+                setPlayerSize(width, height);
+                isDefaultSize = false;
             }
         </script>
 	</head>
-	<body>
+	<body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
         <div id="player"></div>
         </br>
+        Play list:</br>
+        <ol id="play_list"></ol>
         Key Code: <span id="key_code"></span>
         Status: <span id="status"></span>
-        <ul id="play_list"></ul>
 	</body>
 </html>
