@@ -3,9 +3,30 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Youtube Play Control</title>
+        <style>
+            #player_pane{
+                width: 100%;
+                height: 100%;
+                position: static;
+                top: 0;
+                left: 0;
+            }
+            #status_pane{
+                width: 100%;
+                height: auto;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+            }
+        </style>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+		<link rel="stylesheet" href="../reveal.js/css/reveal.css">
+		<link rel="stylesheet" href="../reveal.js/css/theme/default.css" id="theme">
+        <link rel="stylesheet" href="../reveal.js/lib/css/zenburn.css">
         <script type="text/javascript">
             var player;
             var isDefaultSize = true;
+            var isPlayerMode = true;
             var DEFAULT_PLAYER_WIDTH = 640;
             var DEFAULT_PLAYER_HEIGHT = 390;
             var windowWidth = DEFAULT_PLAYER_WIDTH;
@@ -73,6 +94,7 @@
             var CMD_VOLUME_DOWN = "volume_down";
             var CMD_SEEK_TO = "seek_to";
             var CMD_FULL_SCREEN = "full_screen";
+            var CMD_CHANGE_MODE = "change_mode";
 
             var VIDEO_ID = "video_id";
             var VIDEO_TITLE = "video_title";
@@ -155,6 +177,10 @@
                     case "x":
                         executeCommand(CMD_FULL_SCREEN);
                         return;
+                    case "M":
+                    case "m":
+                        executeCommand(CMD_CHANGE_MODE);
+                        return;
                     case "0":
                     case "1":
                     case "2":
@@ -169,7 +195,7 @@
                         if(cmd.length > 4) {
                             cmd = "";
                         }
-                        updateStatusInfo(cmd);
+                        updateCommandInfo(cmd);
                         return;
                 }
 
@@ -186,7 +212,7 @@
                         var seekTo = currentTime + parseInt(cmd);
                         if(seekTo > duration) {
                             console.log("Cannot seek to " + seekTo);
-                            updateStatusInfo("Invalid command!");
+                            updateCommandInfo("Invalid command!");
                             cmd = "";
                         } else {
                             executeCommand(CMD_SEEK_TO, seekTo);
@@ -198,11 +224,15 @@
                         var seekTo = currentTime - parseInt(cmd);
                         if(seekTo < 0) {
                             console.log("Cannot seek to " + seekTo);
-                            updateStatusInfo("Invalid command!");
+                            updateCommandInfo("Invalid command!");
                             cmd = "";
                         } else {
                             executeCommand(CMD_SEEK_TO, seekTo);
                         }
+                        return;
+                    case 27: /* Esc key */
+                        cmd = "";
+                        updateCommandInfo(cmd);
                         return;
                 }
             }
@@ -268,13 +298,15 @@
                         if(isDefaultSize) {
                             stretchToFullScreen();
                         } else {
-                            setPlayerSize(DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT);
-                            isDefaultSize = true;
+                            shrinkToDefaultSize();
                         }
+                        break;
+                    case CMD_CHANGE_MODE:
+                        changeMode();
                         break;
                 }
                 cmd = "";
-                updateStatusInfo(cmd);
+                updateCommandInfo(cmd);
             }
 
             function playVideo() {
@@ -398,6 +430,10 @@
                 document.getElementById('status').innerHTML = msg;
             }
 
+            function updateCommandInfo(msg) {
+                document.getElementById('command').innerHTML = msg;
+            }
+
             function initYTPlayer() {
                 player = new YT.Player(
                     'player', {
@@ -428,22 +464,76 @@
             }
 
             function stretchToFullScreen() {
-                var margin = 14;
+                var margin = 0;
                 var width = windowWidth - (margin * 2);
                 var height = windowHeight - (margin * 2);
                 width = width > 0? width : 0;
                 height = height > 0? height: 0;
                 setPlayerSize(width, height);
                 isDefaultSize = false;
+                showPlayList(false);
+            }
+
+            function shrinkToDefaultSize() {
+                setPlayerSize(DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT);
+                isDefaultSize = true;
+                showPlayList(true);
+            }
+
+            function showPlayList(show) {
+                if(show) {
+                    $("#play_list_pane").show();
+                } else {
+                    $("#play_list_pane").hide();
+                }
+            }
+
+            function changeMode() {
+                console.log("changeMode");
+                if(isPlayerMode) {
+                    $("#player_pane").css({"display" : "none"});
+                    isPlayerMode = false;
+                } else {
+                    $("#player_pane").css({"display" : "initial"});
+                    isPlayerMode = true;
+                }
             }
         </script>
 	</head>
 	<body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
-        <div id="player"></div>
-        </br>
-        Play list:</br>
-        <ol id="play_list"></ol>
-        Key Code: <span id="key_code"></span>
-        Status: <span id="status"></span>
+        <div id="player_pane">
+            <div id="player"></div>
+            <div id="play_list_pane">
+                <h4>Play list:</h4>
+                <ol id="play_list"></ol>
+            </div>
+        </div>
+        <div id="status_pane">
+            Status: <span id="status"></span>
+            command: <span id="command"></span>
+            key: <span id="key_code"></span>
+        </div>
+		<div class="reveal">
+			<div class="slides" id="slides">
+                <section data-markdown="../slides/sample.md" data-separator="^\n\n\n" data-vertical="^\n\n"></section>
+            </div>
+		</div>
+		<script src="../reveal.js/lib/js/head.min.js"></script>
+		<script src="../reveal.js/js/reveal.js"></script>
+		<script>
+			Reveal.initialize({
+				controls: false,
+				progress: false,
+				history: false,
+				center: true,
+				dependencies: [
+					{ src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: '../reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: '../reveal.js/plugin/notes/notes.js' }
+				]
+			});
+		</script>
 	</body>
 </html>
