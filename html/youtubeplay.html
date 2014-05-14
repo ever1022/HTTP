@@ -98,7 +98,8 @@
 
             var VIDEO_ID = "video_id";
             var VIDEO_TITLE = "video_title";
-            document.onkeyup = function(event){
+            var browserAgent;
+            document.onkeyup = function(event) {
                 var key = String.fromCharCode(event.keyCode);
                 var keyCode = event.keyCode;
                 document.getElementById('key_code').innerHTML = key + "(" + keyCode + ")";
@@ -200,10 +201,12 @@
                 }
 
                 switch(keyCode) {
-                    case 61: /* + key */
+                    case 61: /* + key to Firefox */
+                    case 187: /* + key to other browsers */
                         executeCommand(CMD_VOLUME_UP);
                         break;
-                    case 173: /* - key */
+                    case 173: /* - key to Firefox */
+                    case 189: /* - key to other browsers */
                         executeCommand(CMD_VOLUME_DOWN);
                         break;
                     case 190: /* > key */
@@ -243,7 +246,8 @@
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-            console.log("Create a YouTube player...");
+            browserAgent = identifyBrowser();
+            console.log("Browser: " + browserAgent);
             function onYouTubeIframeAPIReady() {
                 console.log("Youtube Iframe API is ready.");
                 initYTPlayer();
@@ -470,12 +474,22 @@
                 width = width > 0? width : 0;
                 height = height > 0? height: 0;
                 setPlayerSize(width, height);
+                if(height >= 480 && height < 720) {
+                    player.setPlaybackQuality("large");
+                } else if(height >= 720 && height < 1080) {
+                    player.setPlaybackQuality("hd720");
+                } else if(height >= 1080 && height < 1920) {
+                    player.setPlaybackQuality("hd1080");
+                } else if(height >= 1920) {
+                    player.setPlaybackQuality("highres");
+                }
                 isDefaultSize = false;
                 showPlayList(false);
             }
 
             function shrinkToDefaultSize() {
                 setPlayerSize(DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT);
+                player.setPlaybackQuality("default");
                 isDefaultSize = true;
                 showPlayList(true);
             }
@@ -491,17 +505,43 @@
             function changeMode() {
                 console.log("changeMode");
                 if(isPlayerMode) {
-                    $("#player_pane").css({"display" : "none"});
+                    $("#player_pane").css({
+                        "display" : "none",
+                    });
                     isPlayerMode = false;
                 } else {
-                    $("#player_pane").css({"display" : "initial"});
+                    $("#player_pane").css({
+                        "display" : "static",
+                    });
                     isPlayerMode = true;
                 }
+            }
+
+            function identifyBrowser() {
+                var regexps = {
+                    'Chrome': [ /Chrome\/(\S+)/ ],
+                    'Firefox': [ /Firefox\/(\S+)/ ],
+                    'MSIE': [ /MSIE (\S+);/ ],
+                    'Opera': [
+                        /Opera\/.*?Version\/(\S+)/,     /* Opera 10 */
+                        /Opera\/(\S+)/                  /* Opera 9 and older */
+                    ],
+                    'Safari': [ /Version\/(\S+).*?Safari\// ]
+                }, re, browser;
+                var userAgent = navigator.userAgent;
+                for(browser in regexps) {
+                    while(re = regexps[browser].shift()) {
+                        if (m = userAgent.match(re)) {
+                            return browser;
+                        }
+                    }
+                }
+                return null;
             }
         </script>
 	</head>
 	<body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
-        <div id="player_pane">
+        <div id="player_pane" style="background-color:white;">
             <div id="player"></div>
             <div id="play_list_pane">
                 <h4>Play list:</h4>
@@ -522,6 +562,7 @@
 		<script src="../reveal.js/js/reveal.js"></script>
 		<script>
 			Reveal.initialize({
+                keyboard: true,
 				controls: false,
 				progress: false,
 				history: false,
