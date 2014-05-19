@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Read Local File</title>
+        <script type="text/javascript">
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                console.log("Support File APIs");
+            } else {
+                alert('The File APIs are not fully supported in this browser.');
+            }
+
+            function handleFileSelect(evt) {
+                var files = evt.target.files;
+                if(!files.length) {
+                    alert("Select a file!");
+                    return;
+                }
+                var file = files[0];
+                var reader = new FileReader();
+                reader.onloadend = function (evt) {
+                    if (evt.target.readyState == FileReader.DONE) {
+                        document.getElementById('file_content').textContent = evt.target.result;
+                    }
+                };
+                reader.readAsText(file);
+            }
+        </script>
+	</head>
+	<body>
+        <input type="file" id="files" name="files[]" />
+        <div id="file_content"></div>
+        <script type="text/javascript">
+            document.getElementById('files').addEventListener('change', handleFileSelect, false);
+        </script>
+	</body>
+</html>
