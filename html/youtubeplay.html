@@ -4,19 +4,22 @@
 		<meta charset="utf-8">
 		<title>Youtube Play Control</title>
         <style>
-            #player_pane{
+            #player_pane {
                 width: 100%;
                 height: 100%;
                 position: static;
                 top: 0;
                 left: 0;
             }
-            #status_pane{
+            #status_pane {
                 width: 100%;
                 height: auto;
                 position: fixed;
                 bottom: 0;
                 left: 0;
+            }
+            #select_file {
+                display : none;
             }
         </style>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
@@ -99,6 +102,8 @@
             var VIDEO_ID = "video_id";
             var VIDEO_TITLE = "video_title";
             var browserAgent;
+            var defaultRevealElement;
+            var isMarkdownLoaded = false;
             document.onkeyup = function(event) {
                 var key = String.fromCharCode(event.keyCode);
                 var keyCode = event.keyCode;
@@ -181,6 +186,10 @@
                     case "M":
                     case "m":
                         executeCommand(CMD_CHANGE_MODE);
+                        return;
+                    case "O":
+                    case "o":
+                        $("#select_file").click();
                         return;
                     case "0":
                     case "1":
@@ -538,6 +547,73 @@
                 }
                 return null;
             }
+
+            function initializeRevealJs() {
+                console.log("initializeRevealJs");
+                backupDefaultRevealJsElement();
+                reloadRevealJsScript();
+                Reveal.initialize({
+                    controls: false,
+                    progress: false,
+                    history: false,
+                    center: true,
+
+                    // Optional libraries used to extend on reveal.js
+                    dependencies: [
+                        { src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                        { src: '../reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                        { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                        { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                    ]
+                });
+            }
+
+            function backupDefaultRevealJsElement() {
+                defaultRevealElement = document.getElementById("reveal").cloneNode(true);
+            }
+
+            function removeRevealJsElement() {
+                var currentRevealElement = document.getElementById("reveal");
+                currentRevealElement.parentNode.removeChild(currentRevealElement);
+            }
+
+            function reloadRevealJsScript() {
+                console.log("reloadRevealJsScript");
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+
+                var tag1 = document.createElement('script');
+                tag1.src = "../reveal.js/js/reveal.js";
+                firstScriptTag.parentNode.insertBefore(tag1, firstScriptTag);
+
+                var tag2 = document.createElement('script');
+                tag2.src = "../reveal.js/lib/js/head.min.js";
+                firstScriptTag.parentNode.insertBefore(tag2, firstScriptTag);
+            }
+
+            function handleFileSelect(evt) {
+                console.log("Handle file select...");
+                var files = evt.target.files;
+                if(!files.length) {
+                    alert("Select a file!");
+                    return;
+                }
+                var file = files[0];
+                var reader = new FileReader();
+                reader.onloadend = function (evt) {
+                    if (evt.target.readyState == FileReader.DONE) {
+                        if(isMarkdownLoaded) {
+                            removeRevealJsElement();
+                            var body = document.getElementsByTagName("body")[0];
+                            body.appendChild(defaultRevealElement);
+                        }
+                        document.getElementById('loaded_markdown').innerHTML = evt.target.result;
+                        backupDefaultRevealJsElement();
+                        initializeRevealJs();
+                        isMarkdownLoaded = true;
+                    }
+                };
+                reader.readAsText(file);
+            }
         </script>
 	</head>
 	<body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
@@ -548,33 +624,26 @@
                 <ol id="play_list"></ol>
             </div>
         </div>
+
         <div id="status_pane">
             Status: <span id="status"></span>
             command: <span id="command"></span>
             key: <span id="key_code"></span>
         </div>
-		<div class="reveal">
+
+        <input type="file" id="select_file" name="Select a file" accept="text/x-markdown"></input>
+        <script type="text/javascript">
+            document.getElementById("select_file").addEventListener("change", handleFileSelect, false);
+        </script>
+
+		<div class="reveal" id="reveal">
 			<div class="slides" id="slides">
-                <section data-markdown="../slides/sample.md" data-separator="^\n\n\n" data-vertical="^\n\n"></section>
+                <section data-markdown data-separator="\n---\n">
+                    <script id="loaded_markdown" type="text/template"></script>
+                </section>
             </div>
 		</div>
 		<script src="../reveal.js/lib/js/head.min.js"></script>
 		<script src="../reveal.js/js/reveal.js"></script>
-		<script>
-			Reveal.initialize({
-                keyboard: true,
-				controls: false,
-				progress: false,
-				history: false,
-				center: true,
-				dependencies: [
-					{ src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
-					{ src: '../reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-                    { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-                    { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
-					{ src: '../reveal.js/plugin/notes/notes.js' }
-				]
-			});
-		</script>
 	</body>
 </html>
