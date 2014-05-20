@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Load MarkDown Sample and show with RevealJs</title>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+		<link rel="stylesheet" href="../reveal.js/css/reveal.css">
+		<link rel="stylesheet" href="../reveal.js/css/theme/default.css" id="theme">
+        <link rel="stylesheet" href="../reveal.js/lib/css/zenburn.css">
+        <script type="text/javascript">
+            var defaultRevealElement;
+            var haveToReloadRevealScript = false;
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                console.log("Support File APIs");
+            } else {
+                alert('The File APIs are not fully supported in this browser.');
+            }
+
+            document.onkeyup = function(event) {
+                var key = String.fromCharCode(event.keyCode);
+                var keyCode = event.keyCode;
+                switch(key) {
+                    case "S":
+                    case "s":
+                        removeRevealJsElement();
+                        var body = document.getElementsByTagName("body")[0];
+                        body.appendChild(defaultRevealElement);
+                        haveToReloadRevealScript = true;
+                        $("#select_file").click();
+                        return;
+                }
+            }
+
+            function handleFileSelect(evt) {
+                console.log("Handle file select...");
+                var files = evt.target.files;
+                if(!files.length) {
+                    alert("Select a file!");
+                    return;
+                }
+                var file = files[0];
+                var reader = new FileReader();
+                reader.onloadend = function (evt) {
+                    if (evt.target.readyState == FileReader.DONE) {
+                        document.getElementById('loaded_markdown').innerHTML = evt.target.result;
+                        showSelectFile(false);
+                        loadRevealJsScript();
+                        haveToReloadRevealScript = false;
+                        initializeRevealJs();
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            function initializeRevealJs() {
+                storeDefaultRevealJsElement();
+                console.log("initializeRevealJs");
+                Reveal.initialize({
+                    controls: false,
+                    progress: false,
+                    history: false,
+                    center: true,
+
+                    // Optional libraries used to extend on reveal.js
+                    dependencies: [
+                        { src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                        { src: '../reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                        { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                        { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                    ]
+                });
+            }
+            
+            function showSelectFile(show) {
+                if(show) {
+                    $("#select_file").show();
+                } else {
+                    $("#select_file").hide();
+                }
+            }
+
+            function storeDefaultRevealJsElement() {
+                defaultRevealElement = document.getElementById("reveal").cloneNode(true);
+            }
+
+            function removeRevealJsElement() {
+                var currentRevealElement = document.getElementById("reveal");
+                currentRevealElement.parentNode.removeChild(currentRevealElement);
+            }
+
+            function loadRevealJsScript() {
+                console.log("loadRevealJsScript");
+                var tag1 = document.createElement('script');
+                tag1.src = "../reveal.js/js/reveal.js";
+                var firstScriptTag = document.getElementsByTagName('script')[0];
+                firstScriptTag.parentNode.insertBefore(tag1, firstScriptTag);
+                var tag2 = document.createElement('script');
+                tag2.src = "../reveal.js/lib/js/head.min.js";
+                firstScriptTag.parentNode.insertBefore(tag2, firstScriptTag);
+            }
+        </script>
+	</head>
+
+	<body>
+        <input type="file" id="select_file" name="Select a file" accept="text/x-markdown">
+            <span class="button">Choose A MarkDown File</span>
+        </input>
+        <script type="text/javascript">
+            document.getElementById("select_file").addEventListener("change", handleFileSelect, false);
+        </script>
+		<div class="reveal" id="reveal">
+			<div class="slides">
+                <!-- Slides are separated by three dashes (quick 'n dirty regular expression) -->
+                <section data-markdown data-separator="\n---\n">
+                    <script id="loaded_markdown" type="text/template">
+                    </script>
+                </section>
+            </div>
+		</div>
+		<script src="../reveal.js/lib/js/head.min.js"></script>
+		<script src="../reveal.js/js/reveal.js"></script>
+		</script>
+	</body>
+</html>

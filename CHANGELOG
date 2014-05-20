@@ -1,3 +1,6 @@
+2014.05.20
+Add sample code of loading markdown and show with RevealJs.
+
 2014.05.04
 Support chat with socket.io
 Support open markdown file directly.
