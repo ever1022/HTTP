@@ -15,11 +15,15 @@
                 width: 100%;
                 height: auto;
                 position: fixed;
-                bottom: 0;
-                left: 0;
+                bottom: 1%;
+                right: 1%;
+                text-align: right;
             }
             #select_file {
                 display : none;
+            }
+            .status_element {
+                color: #4A6D92;
             }
         </style>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
@@ -39,10 +43,13 @@
                 size: function() {
                     return this.videos.length;
                 },
-                addVideo: function(videoId) {
+                addVideo: function(videoId, videoTitle) {
                     var newVideo = {
                         VIDEO_ID: videoId,
                         VIDEO_TITLE: "unknown"
+                    }
+                    if(videoTitle) {
+                        newVideo.VIDEO_TITLE = videoTitle;
                     }
                     this.videos.push(newVideo);
                     console.log("Current videos size: " + this.size());
@@ -69,6 +76,11 @@
                     }
                     return titleList;
                 },
+                getTitleAtIndex: function(index) {
+                    if(index >= 0 && index < this.videos.length) {
+                        return this.videos[index].VIDEO_TITLE;
+                    }
+                },
                 updateVideoTitle: function(videoId, videoTitle) {
                     console.log("id: " + videoId);
                     console.log("title: " + videoTitle);
@@ -83,6 +95,9 @@
                     for(var index = 0; index < this.videos.length; index++) {
                         console.log(index + ". " + this.videos[index].VIDEO_TITLE + "(" + this.videos[index].VIDEO_ID + ")");
                     }
+                },
+                removeAll: function() {
+                    this.videos.length = 0;
                 }
             }
             var cmd = "";
@@ -107,7 +122,7 @@
             document.onkeyup = function(event) {
                 var key = String.fromCharCode(event.keyCode);
                 var keyCode = event.keyCode;
-                document.getElementById('key_code').innerHTML = key + "(" + keyCode + ")";
+                console.log("key: " + keyCode);
                 switch(key) {
                     case "p":
                     case "P":
@@ -223,24 +238,20 @@
                         var duration = player.getDuration();
                         var seekTo = currentTime + parseInt(cmd);
                         if(seekTo > duration) {
-                            console.log("Cannot seek to " + seekTo);
-                            updateCommandInfo("Invalid command!");
-                            cmd = "";
-                        } else {
-                            executeCommand(CMD_SEEK_TO, seekTo);
+                            console.log("Exceed the duration, seek to the end.");
+                            seekTo = duration;
                         }
+                        executeCommand(CMD_SEEK_TO, seekTo);
                         return;
                     case 188: /* < key */
                         var currentTime = player.getCurrentTime();
                         var duration = player.getDuration();
                         var seekTo = currentTime - parseInt(cmd);
                         if(seekTo < 0) {
-                            console.log("Cannot seek to " + seekTo);
-                            updateCommandInfo("Invalid command!");
-                            cmd = "";
-                        } else {
-                            executeCommand(CMD_SEEK_TO, seekTo);
+                            console.log("Exceed the origin, seek to the start.");
+                            seekTo = 0;
                         }
+                        executeCommand(CMD_SEEK_TO, seekTo);
                         return;
                     case 27: /* Esc key */
                         cmd = "";
@@ -270,10 +281,28 @@
             }
 
             function onPlayerStateChange(event) {
-                console.log("Player state changes " + event.data);
-                if (event.data == YT.PlayerState.CUED) {
-                    event.target.playVideo();
+                //console.log("Player state changes " + event.data);
+                var statusMsg;
+                switch(event.data) {
+                    case YT.PlayerState.ENDED:
+                        statusMsg = "(ENDED) ";
+                        break;
+                    case YT.PlayerState.PLAYING:
+                        statusMsg = "(PLAYING) ";
+                        break;
+                    case YT.PlayerState.PAUSED:
+                        statusMsg = "(PAUSED) ";
+                        break;
+                    case YT.PlayerState.BUFFERING:
+                        statusMsg = "(BUFFERING) ";
+                        break;
+                    case YT.PlayerState.CUED:
+                        event.target.playVideo();
+                        return;
                 }
+                var currentPlayIndex = event.target.getPlaylistIndex();
+                statusMsg += videoList.getTitleAtIndex(currentPlayIndex);
+                updateStatusInfo(statusMsg);
             }
 
             function executeCommand(commandToExecute, value) {
@@ -379,7 +408,7 @@
             }
 
             function setPlayerSize(width, height) {
-                console.log("setPlayerSize: " + width + "x" + height);
+                //console.log("setPlayerSize: " + width + "x" + height);
                 player.setSize(width, height);
             }
 
@@ -387,10 +416,14 @@
                 return prompt("Add video");
             }
 
-            function addVideo(videoId) {
-                updateStatusInfo("Video " + videoId + " is added.");
-                videoList.addVideo(videoId);
-                loadVideoTitle(videoId);
+            function addVideo(videoId, videoTitle) {
+                updateStatusInfo("Video " + videoId + "(" + videoTitle + ") is added.");
+                videoList.addVideo(videoId, videoTitle);
+                if(videoTitle) {
+                    updateVideoTitles();
+                } else {
+                    loadVideoTitle(videoId);
+                }
                 if(player) {
                     var currentPlayIndex = player.getPlaylistIndex();
                     if(! currentPlayIndex) {
@@ -466,7 +499,6 @@
                 var bodyElement = document.getElementsByTagName('body')[0];
                 windowWidth = window.innerWidth || documentElement.clientWidth || bodyElement.clientWidth;
                 windowHeight = window.innerHeight|| documentElement.clientHeight|| bodyElement.clientHeight;
-                console.log("Windown size: " + windowWidth + " x " +  windowHeight);
             }
 
             function onWindowSizeChange() {
@@ -494,6 +526,7 @@
                 }
                 isDefaultSize = false;
                 showPlayList(false);
+                showStatusPane(false);
             }
 
             function shrinkToDefaultSize() {
@@ -501,6 +534,7 @@
                 player.setPlaybackQuality("default");
                 isDefaultSize = true;
                 showPlayList(true);
+                showStatusPane(true);
             }
 
             function showPlayList(show) {
@@ -511,17 +545,33 @@
                 }
             }
 
+            function showStatusPane(show) {
+                if(show) {
+                    $("#status_pane").css({
+                        "display" : "static",
+                    });
+                } else {
+                    $("#status_pane").css({
+                        "display" : "none",
+                    });
+                }
+            }
+
             function changeMode() {
                 console.log("changeMode");
                 if(isPlayerMode) {
                     $("#player_pane").css({
                         "display" : "none",
                     });
+                    showStatusPane(true);
                     isPlayerMode = false;
                 } else {
                     $("#player_pane").css({
                         "display" : "static",
                     });
+                    if(! isDefaultSize) {
+                        showStatusPane(false);
+                    }
                     isPlayerMode = true;
                 }
             }
@@ -601,11 +651,15 @@
                 var reader = new FileReader();
                 reader.onloadend = function (evt) {
                     if (evt.target.readyState == FileReader.DONE) {
+                        //player.destroy();
+                        //initYTPlayer();
+                        videoList.removeAll();
                         if(isMarkdownLoaded) {
                             removeRevealJsElement();
                             var body = document.getElementsByTagName("body")[0];
                             body.appendChild(defaultRevealElement);
                         }
+                        addVideosFromContent(evt.target.result);
                         document.getElementById('loaded_markdown').innerHTML = evt.target.result;
                         backupDefaultRevealJsElement();
                         initializeRevealJs();
@@ -613,6 +667,27 @@
                     }
                 };
                 reader.readAsText(file);
+            }
+
+            function addVideosFromContent(content) {
+                // video pattern should be [title](url)
+                var regExp = /\[[\u4e00-\u9fa5|\w|\s]*\]\([\u4e00-\u9fa5|\w|$-/:-?{-~!"^_`\[\]]*\)/g;
+                var match = content.match(regExp);
+                if(match) {
+                    for(var count = 0; count < match.length; count++) {
+                        var matchedPattern = match[count];
+                        console.log("Matched: " + matchedPattern);
+                        regExp = /\[([\u4e00-\u9fa5|\w|\s]*)\]\(([\u4e00-\u9fa5|\w|$-/:-?{-~!"^_`\[\]]*)\)/;
+                        var title = matchedPattern.match(regExp)[1];
+                        var url = matchedPattern.match(regExp)[2];
+                        var id = parseVideoUrl(url);
+                        if(id) {
+                            addVideo(id, title);
+                        }
+                    }
+                } else {
+                    console.log("No video link is matched.");
+                }
             }
         </script>
 	</head>
@@ -626,12 +701,11 @@
         </div>
 
         <div id="status_pane">
-            Status: <span id="status"></span>
-            command: <span id="command"></span>
-            key: <span id="key_code"></span>
+            <div><span class="status_element" id="status"></span></div>
+            <div><span class="status_element" id="command"></span></div>
         </div>
 
-        <input type="file" id="select_file" name="Select a file" accept="text/x-markdown"></input>
+        <input type="file" id="select_file" name="Select a file"></input>
         <script type="text/javascript">
             document.getElementById("select_file").addEventListener("change", handleFileSelect, false);
         </script>
@@ -643,7 +717,7 @@
                 </section>
             </div>
 		</div>
-		<script src="../reveal.js/lib/js/head.min.js"></script>
-		<script src="../reveal.js/js/reveal.js"></script>
+        <script src="../reveal.js/lib/js/head.min.js"></script>
+        <script src="../reveal.js/js/reveal.js"></script>
 	</body>
 </html>

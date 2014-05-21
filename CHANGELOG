@@ -1,3 +1,6 @@
+2014.05.21
+Parse video url from file content and add into play list.
+
 2014.05.20
 Add sample code of loading markdown and show with RevealJs.
 Merge loading markdown into youtube play control.
