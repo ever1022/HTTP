@@ -14,6 +14,7 @@
             #status_pane {
                 width: 100%;
                 height: auto;
+                display: none;
                 position: fixed;
                 bottom: 1%;
                 right: 1%;
@@ -526,7 +527,6 @@
                 }
                 isDefaultSize = false;
                 showPlayList(false);
-                showStatusPane(false);
             }
 
             function shrinkToDefaultSize() {
@@ -534,7 +534,6 @@
                 player.setPlaybackQuality("default");
                 isDefaultSize = true;
                 showPlayList(true);
-                showStatusPane(true);
             }
 
             function showPlayList(show) {
@@ -547,13 +546,9 @@
 
             function showStatusPane(show) {
                 if(show) {
-                    $("#status_pane").css({
-                        "display" : "static",
-                    });
+                    $("#status_pane").show();
                 } else {
-                    $("#status_pane").css({
-                        "display" : "none",
-                    });
+                    $("#status_pane").hide();
                 }
             }
 
@@ -569,9 +564,7 @@
                     $("#player_pane").css({
                         "display" : "static",
                     });
-                    if(! isDefaultSize) {
-                        showStatusPane(false);
-                    }
+                    showStatusPane(false);
                     isPlayerMode = true;
                 }
             }
