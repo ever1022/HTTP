@@ -25,8 +25,19 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Youtube Play Control</title>
+        <title>Worshipper</title>
         <style>
+            .default_pane {
+                background-color: white;
+            }
+            #program_title_pane {
+                color: #4A6D92;
+                font-size: 200%;
+                padding-left: 4px;
+                padding-top: 4px;
+                padding-right: 4px;
+                padding-bottom: 8px;
+            }
             #player_pane {
                 width: 100%;
                 height: 100%;
@@ -34,10 +45,14 @@
                 top: 0;
                 left: 0;
             }
+            #play_list_pane {
+                position: relative;
+                top: 0;
+                left: 10px;
+            }
             #status_pane {
                 width: 100%;
                 height: auto;
-                display: none;
                 position: fixed;
                 bottom: 1%;
                 right: 1%;
@@ -49,15 +64,25 @@
             .status_element {
                 color: #4A6D92;
             }
+            #help_pane {
+                width: auto;
+                height: auto;
+                position: fixed;
+                color: #4A6D92;
+                top: 1%;
+                right: 1%;
+            }
         </style>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+        <script src="/reveal.js/plugin/markdown/marked.js"></script>
         <link rel="stylesheet" href="/reveal.js/css/reveal.css">
         <link rel="stylesheet" href="/reveal.js/css/theme/default.css" id="theme">
         <link rel="stylesheet" href="/reveal.js/lib/css/zenburn.css">
         <script type="text/javascript">
             var player;
-            var isDefaultSize = true;
+            var isPlayerDefaultSize = true;
             var isPlayerMode = true;
+            var isHelpShowed = false;
             var DEFAULT_PLAYER_WIDTH = 640;
             var DEFAULT_PLAYER_HEIGHT = 390;
             var windowWidth = DEFAULT_PLAYER_WIDTH;
@@ -159,21 +184,9 @@
                             }
                         }
                         return;
-                    case "S":
-                    case "s":
-                        executeCommand(CMD_STOP);
-                        return;
                     case "R":
                     case "r":
                         executeCommand(CMD_REWIND);
-                        return;
-                    case "N":
-                    case "n":
-                        executeCommand(CMD_NEXT);
-                        return;
-                    case "B":
-                    case "b":
-                        executeCommand(CMD_PREVIOUS);
                         return;
                     case "A":
                     case "a":
@@ -218,8 +231,8 @@
                         }
                         cmd = "";
                         return;
-                    case "X":
-                    case "x":
+                    case "F":
+                    case "f":
                         executeCommand(CMD_FULL_SCREEN);
                         return;
                     case "M":
@@ -229,6 +242,10 @@
                     case "O":
                     case "o":
                         $("#select_file").click();
+                        return;
+                    case "H":
+                    case "h":
+                        showHelp(! isHelpShowed);
                         return;
                     case "0":
                     case "1":
@@ -258,24 +275,36 @@
                         executeCommand(CMD_VOLUME_DOWN);
                         break;
                     case 190: /* > key */
-                        var currentTime = player.getCurrentTime();
-                        var duration = player.getDuration();
-                        var seekTo = currentTime + parseInt(cmd);
-                        if(seekTo > duration) {
-                            console.log("Exceed the duration, seek to the end.");
-                            seekTo = duration;
+                        if(cmd) {
+                            console.log("Valid seek param:" + parseInt(cmd));
+                            var currentTime = player.getCurrentTime();
+                            var duration = player.getDuration();
+                            var seekTo = currentTime + parseInt(cmd);
+                            if(seekTo > duration) {
+                                console.log("Exceed the duration, seek to the end.");
+                                seekTo = duration;
+                            }
+                            executeCommand(CMD_SEEK_TO, seekTo);
+                        } else {
+                            console.log("Play next video.");
+                            executeCommand(CMD_NEXT);
                         }
-                        executeCommand(CMD_SEEK_TO, seekTo);
                         return;
                     case 188: /* < key */
-                        var currentTime = player.getCurrentTime();
-                        var duration = player.getDuration();
-                        var seekTo = currentTime - parseInt(cmd);
-                        if(seekTo < 0) {
-                            console.log("Exceed the origin, seek to the start.");
-                            seekTo = 0;
+                        if(cmd) {
+                            console.log("Valid seek param:" + parseInt(cmd));
+                            var currentTime = player.getCurrentTime();
+                            var duration = player.getDuration();
+                            var seekTo = currentTime - parseInt(cmd);
+                            if(seekTo < 0) {
+                                console.log("Exceed the origin, seek to the start.");
+                                seekTo = 0;
+                            }
+                            executeCommand(CMD_SEEK_TO, seekTo);
+                        } else {
+                            console.log("Play previous video.");
+                            executeCommand(CMD_PREVIOUS);
                         }
-                        executeCommand(CMD_SEEK_TO, seekTo);
                         return;
                     case 27: /* Esc key */
                         cmd = "";
@@ -292,6 +321,7 @@
 
             browserAgent = identifyBrowser();
             console.log("Browser: " + browserAgent);
+            loadHelpContent();
             function onYouTubeIframeAPIReady() {
                 console.log("Youtube Iframe API is ready.");
                 initYTPlayer();
@@ -361,7 +391,7 @@
                         playVideo();
                         break;
                     case CMD_FULL_SCREEN:
-                        if(isDefaultSize) {
+                        if(isPlayerDefaultSize) {
                             stretchToFullScreen();
                         } else {
                             shrinkToDefaultSize();
@@ -515,7 +545,7 @@
                         }
                     }
                 );
-                isDefaultSize = true;
+                isPlayerDefaultSize = true;
             }
             
             function updateWindowSize() {
@@ -527,7 +557,7 @@
 
             function onWindowSizeChange() {
                 updateWindowSize();
-                if(! isDefaultSize) {
+                if(! isPlayerDefaultSize) {
                     stretchToFullScreen();
                 }
             }
@@ -548,15 +578,20 @@
                 } else if(height >= 1920) {
                     player.setPlaybackQuality("highres");
                 }
-                isDefaultSize = false;
+                isPlayerDefaultSize = false;
+                showProgramTitle(false);
                 showPlayList(false);
+                showStatusPane(false);
+                showHelp(false);
             }
 
             function shrinkToDefaultSize() {
                 setPlayerSize(DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT);
                 player.setPlaybackQuality("default");
-                isDefaultSize = true;
+                isPlayerDefaultSize = true;
+                showProgramTitle(false);
                 showPlayList(true);
+                showStatusPane(true);
             }
 
             function showPlayList(show) {
@@ -582,12 +617,18 @@
                         "display" : "none",
                     });
                     showStatusPane(true);
+                    showHelp(false);
+                    showProgramTitle(false);
                     isPlayerMode = false;
                 } else {
                     $("#player_pane").css({
                         "display" : "static",
                     });
-                    showStatusPane(false);
+                    if(isPlayerDefaultSize) {
+                        showProgramTitle(true);
+                    } else {
+                        showStatusPane(false);
+                    }
                     isPlayerMode = true;
                 }
             }
@@ -676,6 +717,7 @@
                             body.appendChild(defaultRevealElement);
                         }
                         addVideosFromContent(evt.target.result);
+                        //console.log("" + marked(evt.target.result));
                         document.getElementById('loaded_markdown').innerHTML = evt.target.result;
                         backupDefaultRevealJsElement();
                         initializeRevealJs();
@@ -705,15 +747,49 @@
                     console.log("No video link is matched.");
                 }
             }
+
+            function loadHelpContent() {
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        document.getElementById("help_pane").innerHTML = marked(xmlhttp.responseText);
+                    isHelpShowed = true;
+                    }
+                }
+                xmlhttp.open("GET","./worshipperhelp.md",true);
+                xmlhttp.send();
+            }
+
+            function showHelp(show) {
+                if(show) {
+                    $("#help_pane").show();
+                    isHelpShowed = true;
+                } else {
+                    $("#help_pane").hide();
+                    isHelpShowed = false;
+                }
+            }
+
+            function showProgramTitle(show) {
+                if(show) {
+                    $("#program_title_pane").show();
+                } else {
+                    $("#program_title_pane").hide();
+                }
+            }
         </script>
     </head>
     <body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
-        <div id="player_pane" style="background-color:white;">
+        <div class="default_pane" id="program_title_pane">Worshipper</div>
+        <div class="default_pane" id="player_pane">
             <div id="player"></div>
             <div id="play_list_pane">
                 <h4>Play list:</h4>
                 <ol id="play_list"></ol>
             </div>
+        </div>
+
+        <div id="help_pane">
         </div>
 
         <div id="status_pane">
