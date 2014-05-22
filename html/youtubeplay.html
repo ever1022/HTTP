@@ -1,8 +1,31 @@
 <!doctype html>
+<!--
+    The MIT License (MIT)
+
+    Copyright (c) <2014> <Min-You Cheng, ever1022@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+-->
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Youtube Play Control</title>
+    <head>
+        <meta charset="utf-8">
+        <title>Youtube Play Control</title>
         <style>
             #player_pane {
                 width: 100%;
@@ -28,9 +51,9 @@
             }
         </style>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-		<link rel="stylesheet" href="../reveal.js/css/reveal.css">
-		<link rel="stylesheet" href="../reveal.js/css/theme/default.css" id="theme">
-        <link rel="stylesheet" href="../reveal.js/lib/css/zenburn.css">
+        <link rel="stylesheet" href="/reveal.js/css/reveal.css">
+        <link rel="stylesheet" href="/reveal.js/css/theme/default.css" id="theme">
+        <link rel="stylesheet" href="/reveal.js/lib/css/zenburn.css">
         <script type="text/javascript">
             var player;
             var isDefaultSize = true;
@@ -603,10 +626,10 @@
 
                     // Optional libraries used to extend on reveal.js
                     dependencies: [
-                        { src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
-                        { src: '../reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-                        { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-                        { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                        { src: '/reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                        { src: '/reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                        { src: '/reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                        { src: '/reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
                     ]
                 });
             }
@@ -625,11 +648,11 @@
                 var firstScriptTag = document.getElementsByTagName('script')[0];
 
                 var tag1 = document.createElement('script');
-                tag1.src = "../reveal.js/js/reveal.js";
+                tag1.src = "/reveal.js/js/reveal.js";
                 firstScriptTag.parentNode.insertBefore(tag1, firstScriptTag);
 
                 var tag2 = document.createElement('script');
-                tag2.src = "../reveal.js/lib/js/head.min.js";
+                tag2.src = "/reveal.js/lib/js/head.min.js";
                 firstScriptTag.parentNode.insertBefore(tag2, firstScriptTag);
             }
 
@@ -683,8 +706,8 @@
                 }
             }
         </script>
-	</head>
-	<body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
+    </head>
+    <body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
         <div id="player_pane" style="background-color:white;">
             <div id="player"></div>
             <div id="play_list_pane">
@@ -703,14 +726,14 @@
             document.getElementById("select_file").addEventListener("change", handleFileSelect, false);
         </script>
 
-		<div class="reveal" id="reveal">
-			<div class="slides" id="slides">
+        <div class="reveal" id="reveal">
+            <div class="slides" id="slides">
                 <section data-markdown data-separator="\n---\n">
                     <script id="loaded_markdown" type="text/template"></script>
                 </section>
             </div>
-		</div>
-        <script src="../reveal.js/lib/js/head.min.js"></script>
-        <script src="../reveal.js/js/reveal.js"></script>
-	</body>
+        </div>
+        <script src="/reveal.js/lib/js/head.min.js"></script>
+        <script src="/reveal.js/js/reveal.js"></script>
+    </body>
 </html>
