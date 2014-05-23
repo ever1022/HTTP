@@ -33,9 +33,9 @@
             #program_title_pane {
                 color: #4A6D92;
                 font-size: 200%;
-                padding-left: 4px;
-                padding-top: 4px;
-                padding-right: 4px;
+                padding-left: 8px;
+                padding-top: 8px;
+                padding-right: 8px;
                 padding-bottom: 8px;
             }
             #player_pane {
@@ -44,6 +44,8 @@
                 position: static;
                 top: 0;
                 left: 0;
+                padding-left: 8px;
+                padding-top: 8px;
             }
             #play_list_pane {
                 position: relative;
@@ -233,7 +235,11 @@
                         return;
                     case "F":
                     case "f":
-                        executeCommand(CMD_FULL_SCREEN);
+                        if(isPlayerMode) {
+                            executeCommand(CMD_FULL_SCREEN);
+                        } else {
+                            cmd = "";
+                        }
                         return;
                     case "M":
                     case "m":
@@ -564,6 +570,11 @@
 
             function stretchToFullScreen() {
                 var margin = 0;
+
+                $("#player_pane").css({
+                    "padding-left": "0",
+                    "padding-top": "0"
+                });
                 var width = windowWidth - (margin * 2);
                 var height = windowHeight - (margin * 2);
                 width = width > 0? width : 0;
@@ -586,10 +597,14 @@
             }
 
             function shrinkToDefaultSize() {
+                $("#player_pane").css({
+                    "padding-left": "8px",
+                    "padding-top": "8px"
+                });
                 setPlayerSize(DEFAULT_PLAYER_WIDTH, DEFAULT_PLAYER_HEIGHT);
                 player.setPlaybackQuality("default");
                 isPlayerDefaultSize = true;
-                showProgramTitle(false);
+                showProgramTitle(true);
                 showPlayList(true);
                 showStatusPane(true);
             }
@@ -780,7 +795,7 @@
         </script>
     </head>
     <body  onresize="onWindowSizeChange()" onload="updateWindowSize()">
-        <div class="default_pane" id="program_title_pane">Worshipper</div>
+        <div class="default_pane" id="program_title_pane"><b>Worshipper</b></div>
         <div class="default_pane" id="player_pane">
             <div id="player"></div>
             <div id="play_list_pane">
